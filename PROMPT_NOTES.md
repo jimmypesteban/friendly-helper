@@ -1,0 +1,84 @@
+# Friendly Helper: prompt engineering notes
+
+Live: https://friendly-helper.vercel.app
+Code: `lib/scenario.js` (prompt, schema, validator), `api/scenario.js` (Vercel function), `scripts/eval.mjs` (test harness)
+Model: `gemini-3.8-flash` (generator), `gemini-3.1-pro-preview` (judge), `veo-3.1-fast-generate-preview` (background clips, offline). Planned on Claude; switched to Gemini for billing reasons. Only the call function changed. The project runs on prepaid Gemini credits.
+
+## The pipeline
+
+1. **Server picks the seed**: setting + type of need + a named person the child knows ("your classmate Leo", "Grandpa Joe"). The browser sends nothing, so there is no prompt-injection surface.
+2. **Model fills a strict JSON schema** (Gemini `responseJsonSchema`) with five fixed slots: `scenario`, `helpful`, `ignore`, `careless`, `in_the_way`, `badge_line`.
+3. **Code validates** length limits derived from the UI, 2-4 word labels, no punctuation, no duplicate labels, word blocklist.
+4. **Repair loop**: if validation fails, the specific problems are sent back to the model ("in_the_way.label is 24 characters; max is 22"), up to 3 attempts.
+5. **Server shuffles** the four choices and maps each role to an existing animation (ignore→buzz, careless→shove, in_the_way→slam, helpful→burst+confetti).
+6. **Browser fallback**: if the API fails or takes >25s, the original hand-written door scenario plays. The game never breaks.
+
+## Key design decisions
+
+- **"Exactly one correct answer" is a schema property, not an instruction.** There is one `helpful` slot and three named wrong slots, so zero-correct or two-correct is unrepresentable. The naive version asks the model to count and set `correct: true` once.
+- **Wrong answers are archetypes, not "three wrong things".** Each slot is a different *kind* of unhelpful (distracted / rough / selfish), which gives each its own feedback lesson and lets the game reuse the existing per-choice animations.
+- **Code owns randomness.** Position shuffling and scenario variety come from code, because models are biased on both.
+- **Limits come from the UI.** The 22-character label cap is the width of the blob button at max font size, not an aesthetic choice.
+- **The original hand-written scenario is the one-shot example** in the prompt, for tone and shape, with "do not reuse this situation".
+
+## Results (n=30 per version, LLM judge)
+
+| | Naive prompt (n=12) | v1 | v2 | v3 | v4 (shipped) |
+|---|---|---|---|---|---|
+| Usable output | 0/12 | 30/30 | 30/30 | 30/30 | 30/30 |
+| Valid on first try | — | 21 | 24 | 29 | 28 |
+| One clear answer | — | 28 | 30 | 28 | 30 |
+| Safety rule broken | — | 4 | 0 | 1 | 0 |
+| Shaming feedback | — | 0 | 1 | 0 | 0 |
+| Debatable wrong answers | — | 12 | 4 | 6 | 2 |
+| Latency p50 / p95 | 3.1s | 3.1 / 6.9s | 2.9 / 7.4s | 2.7 / 4.8s | 2.8 / 5.6s |
+
+Caveat: n=30 with an LLM judge is noisy. Differences of 1-2 are not meaningful, and the judge made its own mistakes (v3: called "Grandpa Joe" an unfamiliar stranger).
+
+## Problems found, and what fixed them
+
+1. **Naive prompt: 0/12 usable.** Every response was wrapped in markdown fences, every label overflowed the button (avg 66 chars, max 110, limit 22), and the correct answer was never in slot 4 (slot 2 in 6/12). → Strict schema, UI-derived limits, server-side shuffle.
+2. **Stranger danger (v1, 4/30).** In public settings (bus, train station, sidewalk) the "helpful" answer had a child approach an unknown adult. The prompt said "no strangers" but the seed only gave a bare name. → Fixed in data, not wording: every seed person now carries a relationship ("your neighbor Mr. Chen"). 4 → 0.
+3. **Seed collisions (v1).** Random pairing of "much younger child" with an adult name produced "Little Ms. Rivera". → Needs are tagged kid / younger / adult and only draw from matching names.
+4. **Wrong answers a parent would defend (v1, 12/30).** "Pack your bag", "Eat your sandwich", "Keep reading quietly" sound responsible. → The `ignore` slot must be visibly skipping the person ("Walk right past", "Keep playing tag"), never a chore or self-care. 12 → 2.
+5. **Negative instructions didn't work.** The model wrote "Kick the mitten" on ~25% of first drafts. The blocklist caught it and the repair loop fixed it, at +3s each time. Adding "no kicking" to the prompt changed nothing (6/30 still). Giving it a positive verb list ("block, stand on, sit on, take first, cut in front, crowd") dropped it to ~1/30 and cut p95 latency from 7.4s to 4.8s.
+6. **The "careless" archetype is inherently ambiguous.** A clumsy attempt to help looks like help, and the original "Push the box" has the same problem. Rather than make it obviously bad, the feedback now credits the intent: "You wanted to help, but yanking the bag dumped everything on the wet floor." That's a pedagogy fix, not a filtering fix.
+7. **My verb list overcorrected.** "Hide" and "laugh at" read as cruel rather than thoughtless. → Removed; added "should feel thoughtless, not cruel".
+8. **Length cap vs seed fidelity (open).** To stay under 120 characters the model sometimes drops a seed detail (5/30 in v4). It's harmless to the child, so I accepted it. Notably it turned "can't reach something up high" into "ball in a low bush", apparently steering away from a scene that invites climbing.
+
+## Background video library (Veo)
+
+Live per-play video generation took 1-2 minutes per clip on Veo 3.1 Fast, far too slow for a kids' game. Instead `scripts/make-clips.mjs` pre-generates one 8s clip per **setting**, not per situation, because the situation changes every play but the place can be fixed. `lib/settings.js` holds both prompts for each setting: the setting text for the scenario prompt and the shot description for Veo. The server only picks settings that have a clip, so text and video always agree on the place.
+
+- Style matched to the original asset: photorealistic Hong Kong, child's eye level, slow handheld push-in, background people not looking at camera. A shared style suffix plus a negative prompt (no text, logos, danger, dramatic lighting) keeps the library consistent.
+- Clips show the place, never an action, so they can't contradict the generated situation.
+- Cost: about $0.80 per 8s clip (Veo 3.1 Fast, 720p). The 11th clip failed with a quota error once the credits ran low; the script is resumable and stops cleanly on 429, so 10/11 settings shipped.
+- Post-processing: audio stripped (game is muted), re-encoded to 0.8-1.9 MB each.
+- Playback watchdog: if a browser blocks autoplay (iOS Low Power Mode, background tab), the choices appear anyway after 2.5s instead of stranding the player on a frozen frame. Found during testing.
+
+Eval after switching to Hong Kong settings (n=30): 30/30 usable, 26 first try, 28 one clear answer, 0 safety, 0 shaming, 6 debatable wrong answers (5 of them `careless`). The careless archetype's built-in ambiguity is the main open quality issue.
+
+## Fixing the careless-option ambiguity
+
+Problem: `careless` was defined as "a clumsy attempt to help" (like the original "Push the box"). Children read a fast or rough version of helping ("Grab the crayons fast", "Rip the pack open") as helping, and the judge flagged it 5/30 times. This was a **definition problem, not a wording problem**: no phrasing makes a clumsy attempt to help look clearly wrong to a 6-year-old.
+
+Fix, in four steps:
+1. **Redefine the slot** as "rushing around without looking and accidentally making it worse" (run through the crayons, bump the tray). Still accidental and not mean, but no longer an attempt to help, and it teaches its own lesson (look around you). Also changed the one-shot example from "Push the box" to "Bump into the box", because the old example was anchoring the old meaning. Careless flags: 5/30 → **0/40**.
+2. **Side effect: careless collapsed into ignore** ("Dash past Chloe"). → Contact verbs only (run through, bump into, trip over, knock over); code rejects "past" and fast/rough adverbs in that label.
+3. **Side effect: the wrong answers became formulaic.** "Bump into the…" appeared in 26/40 careless labels and "Walk right past" in 24/40 ignore labels, a tell kids could learn without reading the situation. → Code now picks the careless verb and the ignore move per round, the same "code owns variety" principle as the seeds. Most common phrasing: 26/40 → 12/40 and 24/40 → 10/40.
+4. **New safety catch:** "Call a tall worker" (asking a stranger). → Rule: the helpful action is something the player does themselves, never delegating to an adult or stranger.
+
+Result: careless flags 0 in three consecutive runs (40, 24 judged, 20). Final check, n=20 with an alternate judge (gemini-3.5-flash; the main judge's quota ran out): 20/20 one clear answer, 0 safety, 0 shaming. Remaining: 2 `in_the_way` flags ("Sit on the bench" next to a sad friend can read as keeping them company).
+
+## Matching text to video (in progress, untested)
+
+Clips matched the place but not the people: the text model never saw the video, so it invented people and props that weren't on screen. `lib/scenes.js` now describes each clip's frozen frame and lists "moments": a visible person, given a relationship to the player, with a need built from visible props. Seeds are drawn from these moments, and the prompt forbids mentioning people or objects that aren't on screen. `scripts/eval.mjs --video-only` adds a vision check (frozen frame + generated text, "would a child think this describes the frame?"). Not yet measured: testing paused when the API credits ran out.
+
+Trade-off: variety drops from open-ended random seeds to 23 fixed moments (the wording still changes every play).
+
+## Known gaps
+
+- Clips match the place but not the specific action (nobody on screen is dropping crayons). Per-situation video would need generation fast enough for live play, or a much larger library.
+- Some seed combinations are odd (crayons on a basketball court). A setting-to-need compatibility table would fix it.
+- When API credits or quota run out, the game falls back to the hand-written scene instead of breaking (this has happened in production).
+- The word blocklist is crude and is a backstop only. The LLM judge runs offline in the eval, not per request (latency/cost).

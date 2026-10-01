@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Friendly Helper</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@400;600&family=Montserrat:wght@900&display=swap');
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 100%; height: 100%; overflow: hidden; }
+
+/* ── Intro screen ── */
+#intro-screen {
+  position: fixed; inset: 0; z-index: 600;
+  background: #000;
+  display: flex; align-items: center; justify-content: center;
+}
+#intro-screen.hidden { display: none; }
+#intro-cover {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover; pointer-events: none;
+}
+#play-now-btn {
+  position: absolute;
+  bottom: 14vh; left: 50%;
+  transform: translateX(-50%);
+  background: #FADB14;
+  border: 4px solid #795a3b;
+  border-radius: 80px;
+  padding: clamp(14px,2.2vh,28px) clamp(48px,8vw,120px);
+  font-family: 'Avenir', 'Montserrat', sans-serif;
+  font-weight: 900; font-style: normal;
+  font-size: clamp(18px,2.8vw,40px);
+  color: #4a2e19;
+  cursor: pointer; white-space: nowrap; z-index: 1;
+  transition: transform 0.15s, filter 0.15s;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.25);
+}
+#play-now-btn:hover  { transform: translateX(-50%) scale(1.06); filter: brightness(1.08); }
+#play-now-btn:active { transform: translateX(-50%) scale(0.97); }
+
+/* ── Full-screen wrapper ── */
+#game {
+  position: fixed; inset: 0;
+  overflow: hidden;
+  font-family: 'Avenir', 'Montserrat', sans-serif;
+}
+
+/* Hidden until scene plays out */
+.pre-reveal { opacity: 0; transition: opacity 0.6s ease; }
+.pre-reveal.visible { opacity: 1; }
+
+/* ── Full-screen video background ── */
+#scene-video {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  z-index: 1;
+}
+
+/* Door overlay — for correct-answer animation */
+#door-wrapper {
+  position: absolute;
+  right: 10vw; bottom: 20vh;
+  width: 90px; perspective: 700px;
+  z-index: 6; display: none;
+}
+#door-frame-el { width:90px;height:158px;background:#5a3518;border-radius:5px 5px 0 0;position:relative;box-shadow:-4px 0 12px rgba(0,0,0,0.25); }
+#door-panel-el {
+  position:absolute;top:4px;left:4px;width:82px;height:150px;
+  background:linear-gradient(160deg,#a86830 0%,#7a4820 100%);
+  border-radius:3px 3px 0 0;
+  transform-origin:left center;
+  transition:transform 0.9s cubic-bezier(0.4,0,0.2,1);
+  box-shadow:inset -5px 0 12px rgba(0,0,0,0.3);
+}
+#door-panel-el.open { transform:rotateY(-68deg); }
+.door-pane  { position:absolute;border:2px solid rgba(0,0,0,0.22);border-radius:2px; }
+.dp-top     { top:12px;left:9px;right:9px;height:52px; }
+.dp-bottom  { top:76px;left:9px;right:9px;height:62px; }
+.door-knob  { position:absolute;left:11px;top:50%;width:11px;height:11px;background:radial-gradient(circle at 35% 35%,#ffe066,#b88800);border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,0.4); }
+
+/* P2 overlay — hidden, used only for phone-lift animation */
+#p2-overlay {
+  position: absolute;
+  right: 24vw; bottom: 20vh;
+  z-index: 6; opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+#p2-overlay.show { opacity: 1; }
+
+/* ═══════════════════════════════
+   OVERLAY UI (full-screen, above scene)
+═══════════════════════════════ */
+#dark-overlay {
+  position:absolute;inset:0;
+  background:rgba(0,0,0,0.28);
+  pointer-events:none;
+  z-index:10;
+}
+
+/* HUD — top left */
+#hud {
+  position:absolute;top:4.4vh;left:2.1vw;
+  font-weight:900;font-size:clamp(13px,2vw,36px);color:#FADB14;
+  z-index:30;display:flex;align-items:center;gap:10px;
+}
+#badge {
+  display:none;
+  background:linear-gradient(135deg,#ffd700,#ff8c00);
+  color:#1a0800;padding:4px 14px;border-radius:20px;
+  font-size:clamp(10px,0.9vw,16px);font-weight:900;
+  animation:popIn 0.5s cubic-bezier(0.175,0.885,0.32,1.275) forwards;
+}
+
+/* Title + attempts — top center */
+#scene-title {
+  position:absolute;top:5.6vh;left:50%;transform:translateX(-50%);
+  font-weight:900;font-size:clamp(14px,2vw,36px);
+  color:#fff;text-shadow:2px 2px 4px rgba(0,0,0,0.6);
+  white-space:nowrap;z-index:30;
+}
+#attempts-label {
+  position:absolute;top:calc(5.6vh + clamp(20px,3.2vh,52px));left:50%;transform:translateX(-50%);
+  font-family:'Lexend',sans-serif;font-weight:400;
+  font-size:clamp(10px,1.1vw,18px);color:rgba(255,255,255,0.75);
+  white-space:nowrap;z-index:30;letter-spacing:0.03em;
+}
+
+/* Top-right buttons */
+#top-btns {
+  position:absolute;top:3.5vh;right:2.1vw;
+  display:flex;align-items:center;gap:8px;z-index:30;
+}
+.top-btn {
+  display:flex;align-items:center;gap:6px;
+  background:rgba(255,255,255,0.12);
+  border:1px solid rgba(255,255,255,0.3);
+  border-radius:50px;padding:0.6vh 1.2vw;
+  color:#fff;font-family:'Lexend',sans-serif;font-weight:400;
+  font-size:clamp(10px,0.85vw,15px);
+  cursor:pointer;backdrop-filter:blur(6px);
+  transition:background 0.18s,transform 0.18s;
+}
+.top-btn:hover  { background:rgba(255,255,255,0.22);transform:scale(1.05); }
+.top-btn:active { transform:scale(0.97); }
+.replay-icon { display:inline-block;font-size:1.1em;transition:transform 0.4s ease; }
+#replay-btn:hover .replay-icon { transform:rotate(-180deg); }
+
+/* Wrong-pick: red tint on the blob */
+.choice-btn.wrong-pick .blob-img {
+  filter: sepia(1) saturate(8) hue-rotate(310deg) brightness(0.75);
+}
+.choice-btn.wrong-pick { opacity:0.55 !important; cursor:default; animation:none !important; }
+
+/* Static visible state — no pop animation, used for already-shown buttons on restore */
+.choice-btn.static-shown { opacity:1; pointer-events:auto; animation:none !important; }
+
+/* Force hide / force show regardless of other classes */
+.choice-btn.force-hide { opacity:0 !important; pointer-events:none !important; animation:none !important; }
+.choice-btn.force-show { opacity:1 !important; pointer-events:auto !important; }
+
+/* Blob buttons */
+.choice-btn {
+  position:absolute;
+  width:30.6vw;height:10.6vw;
+  background:none;border:none;padding:0;cursor:pointer;z-index:30;
+  transition:transform 0.22s ease,filter 0.22s ease;
+  opacity:0;pointer-events:none;
+}
+.choice-btn[data-idx="0"] { left:15.4vw;top:calc(13.3vh + 40px); }
+.choice-btn[data-idx="1"] { left:55vw;  top:calc(15.8vh + 40px); }
+.choice-btn[data-idx="2"] { left:4.4vw; top:calc(37.5vh + 40px); }
+.choice-btn[data-idx="3"] { left:68.1vw;top:calc(43.1vh + 40px); }
+
+.choice-btn.revealed[data-idx="0"] { animation:cloudPop 0.5s 0.05s cubic-bezier(0.175,0.885,0.32,1.275) both, float0 4.4s 0.55s ease-in-out infinite; pointer-events:auto; }
+.choice-btn.revealed[data-idx="1"] { animation:cloudPop 0.5s 0.20s cubic-bezier(0.175,0.885,0.32,1.275) both, float1 4.0s 0.70s ease-in-out infinite; pointer-events:auto; }
+.choice-btn.revealed[data-idx="2"] { animation:cloudPop 0.5s 0.10s cubic-bezier(0.175,0.885,0.32,1.275) both, float2 4.8s 0.60s ease-in-out infinite; pointer-events:auto; }
+.choice-btn.revealed[data-idx="3"] { animation:cloudPop 0.5s 0.28s cubic-bezier(0.175,0.885,0.32,1.275) both, float3 4.2s 0.78s ease-in-out infinite; pointer-events:auto; }
+
+.choice-btn:hover { filter:drop-shadow(0 4px 14px rgba(255,255,255,0.3));transform:scale(1.04) translateY(-0.3vh); }
+.choice-btn:hover .blob-img { filter:brightness(1.15); }
+.choice-btn:active  { transform:scale(0.97); }
+.choice-btn:disabled{ opacity:0.4;cursor:default; }
+
+@keyframes cloudPop { 0%{opacity:0;transform:scale(0.6) translateY(8px)} 100%{opacity:1;transform:scale(1) translateY(0)} }
+@keyframes float0 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
+@keyframes float1 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-3px)} }
+@keyframes float2 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
+@keyframes float3 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-3px)} }
+
+.blob-img { position:absolute;inset:0;width:100%;height:100%;object-fit:fill;mix-blend-mode:hard-light;pointer-events:none; }
+.ctext {
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  font-weight:900;font-size:clamp(12px,2vw,38px);
+  color:#fff;text-shadow:2px 2px 4px rgba(0,0,0,0.6);
+  white-space:nowrap;pointer-events:none;
+  font-family:'Avenir','Montserrat',sans-serif;
+}
+
+/* Bottom bar — slides up after scene */
+#objective {
+  position:absolute;bottom:0;left:0;right:0;
+  background:rgba(0,0,0,0.8);padding:2.5vh 0;z-index:30;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:1.5vh;color:#fff;
+  transform:translateY(100%);
+  transition:transform 0.6s cubic-bezier(0.34,1.56,0.64,1);
+}
+#objective.show { transform:translateY(0); }
+#obj-label { font-family:'Lexend',sans-serif;font-weight:400;font-size:clamp(11px,1.46vw,26px);line-height:1.3; }
+#obj-text  { font-family:'Avenir','Montserrat',sans-serif;font-weight:900;font-style:italic;font-size:clamp(12px,1.67vw,30px);line-height:1.3;text-align:center;margin:0; }
+
+/* ── Per-choice click animations ── */
+
+/* idx 0 – Phone: buzzes like a vibrating phone */
+@keyframes btnBuzz {
+  0%,100%{transform:translateX(0) rotate(0deg)}
+  10%{transform:translateX(-7px) rotate(-3deg)}
+  25%{transform:translateX(7px) rotate(3deg)}
+  40%{transform:translateX(-6px) rotate(-2deg)}
+  55%{transform:translateX(6px) rotate(2deg)}
+  70%{transform:translateX(-3px) rotate(-1deg)}
+  85%{transform:translateX(3px) rotate(1deg)}
+}
+/* idx 1 – Push: shoves to the side then bounces back */
+@keyframes btnShove {
+  0%{transform:translateX(0) scale(1)}
+  18%{transform:translateX(40px) scale(0.92)}
+  36%{transform:translateX(-18px) scale(1.05)}
+  54%{transform:translateX(10px) scale(0.98)}
+  72%{transform:translateX(-5px) scale(1.01)}
+  100%{transform:translateX(0) scale(1)}
+}
+/* idx 2 – Open door: bursts outward with green glow */
+@keyframes btnBurst {
+  0%{transform:scale(1);filter:brightness(1) drop-shadow(0 0 0px #27ae60)}
+  25%{transform:scale(1.25);filter:brightness(2) drop-shadow(0 0 24px #27ae60)}
+  50%{transform:scale(0.88);filter:brightness(1.4) drop-shadow(0 0 10px #27ae60)}
+  75%{transform:scale(1.08);filter:brightness(1.2) drop-shadow(0 0 6px #27ae60)}
+  100%{transform:scale(1);filter:brightness(1) drop-shadow(0 0 0px #27ae60)}
+}
+/* idx 3 – Block: slams down and squishes */
+@keyframes btnSlam {
+  0%{transform:translateY(0) scale(1,1)}
+  20%{transform:translateY(-18px) scale(0.97,1.06)}
+  45%{transform:translateY(10px) scale(1.12,0.84)}
+  65%{transform:translateY(-6px) scale(0.96,1.04)}
+  82%{transform:translateY(4px) scale(1.04,0.96)}
+  100%{transform:translateY(0) scale(1,1)}
+}
+.choice-btn.anim-buzz  { animation:btnBuzz  0.55s ease both !important; }
+.choice-btn.anim-shove { animation:btnShove 0.6s  ease both !important; }
+.choice-btn.anim-burst { animation:btnBurst 0.7s  ease both !important; }
+.choice-btn.anim-slam  { animation:btnSlam  0.55s ease both !important; }
+
+/* Unchosen buttons fade out */
+.choice-btn.faded { animation:btnFade 0.35s ease forwards !important; pointer-events:none; }
+@keyframes btnFade { to{opacity:0;transform:scale(0.82) translateY(-8px)} }
+
+/* Scene flash overlays */
+#flash {
+  position:absolute;inset:0;z-index:25;pointer-events:none;
+  opacity:0;transition:opacity 0.1s;
+}
+#flash.show { opacity:1; }
+
+/* Modal */
+#overlay {
+  position:fixed;inset:0;background:rgba(0,0,0,0.65);backdrop-filter:blur(6px);
+  display:none;align-items:center;justify-content:center;z-index:200;
+}
+#overlay.show{display:flex;}
+.modal { background:#fff;border-radius:24px;padding:40px 36px;text-align:center;max-width:400px;width:90%;animation:popIn 0.4s cubic-bezier(0.175,0.885,0.32,1.275); }
+@keyframes popIn { 0%{transform:scale(0.4);opacity:0} 100%{transform:scale(1);opacity:1} }
+.m-emoji{ font-size:3.5rem;margin-bottom:12px; }
+.m-title{ font-size:1.4rem;font-weight:800;margin-bottom:10px; }
+.m-title.wrong  { color:#e74c3c; }
+.m-title.correct{ color:#27ae60; }
+.m-msg { color:#555;line-height:1.65;font-size:0.93rem;margin-bottom:20px; }
+.m-pts { font-size:1.1rem;font-weight:700;color:#e67e22;margin-bottom:18px;display:none; }
+.m-btn { border:none;border-radius:30px;padding:13px 36px;font-size:0.97rem;font-weight:700;cursor:pointer;transition:transform 0.15s; }
+.m-btn:hover{transform:scale(1.05);}
+.m-btn.wrong-style{ background:linear-gradient(135deg,#667eea,#764ba2);color:#fff; }
+.m-btn.right-style{ background:linear-gradient(135deg,#11998e,#38ef7d);color:#fff; }
+
+/* Confetti */
+.conf { position:fixed;pointer-events:none;border-radius:3px;z-index:300;animation:floatUp var(--dur) ease forwards; }
+@keyframes floatUp { 0%{transform:translateY(0) rotate(0deg);opacity:1} 100%{transform:translateY(-380px) rotate(720deg);opacity:0} }
+
+/* ── Badge screen ── */
+#badge-screen {
+  position:fixed;inset:0;z-index:500;
+  background:linear-gradient(135deg,#1a0a00 0%,#3b1f00 50%,#1a0a00 100%);
+  display:none;flex-direction:column;align-items:center;justify-content:center;
+  gap:3vh;
+}
+#badge-screen.show { display:flex; }
+.badge-glow {
+  font-size:clamp(64px,14vw,160px);
+  animation:badgeBounce 0.7s cubic-bezier(0.175,0.885,0.32,1.275) forwards,
+            badgePulse 2.5s 0.7s ease-in-out infinite;
+  filter:drop-shadow(0 0 32px rgba(255,215,0,0.7));
+}
+@keyframes badgeBounce { 0%{transform:scale(0) rotate(-20deg);opacity:0} 100%{transform:scale(1) rotate(0deg);opacity:1} }
+@keyframes badgePulse  { 0%,100%{filter:drop-shadow(0 0 24px rgba(255,215,0,0.5))} 50%{filter:drop-shadow(0 0 48px rgba(255,215,0,0.95))} }
+.badge-title {
+  font-family:'Avenir','Montserrat',sans-serif;font-weight:900;
+  font-size:clamp(20px,3.5vw,56px);color:#FADB14;
+  text-shadow:0 2px 16px rgba(0,0,0,0.6);text-align:center;
+  animation:popIn 0.5s 0.5s both;
+}
+.badge-subtitle {
+  font-family:'Lexend',sans-serif;font-weight:400;
+  font-size:clamp(13px,1.6vw,26px);color:rgba(255,255,255,0.75);
+  animation:popIn 0.5s 0.65s both;
+}
+.badge-pts {
+  font-family:'Avenir','Montserrat',sans-serif;font-weight:900;
+  font-size:clamp(16px,2.2vw,36px);color:#fff;
+  background:rgba(255,215,0,0.15);border:1px solid rgba(255,215,0,0.35);
+  border-radius:40px;padding:0.8vh 2.5vw;
+  animation:popIn 0.5s 0.8s both;
+}
+.badge-btns {
+  display:flex;gap:1.5vw;margin-top:1vh;
+  animation:popIn 0.5s 1s both;
+}
+.badge-btn {
+  border:none;border-radius:50px;padding:clamp(12px,1.6vh,22px) clamp(32px,4vw,70px);
+  font-family:'Avenir','Montserrat',sans-serif;font-weight:900;
+  font-size:clamp(13px,1.4vw,22px);cursor:pointer;
+  transition:transform 0.15s,filter 0.15s;
+}
+.badge-btn:hover  { transform:scale(1.06); filter:brightness(1.1); }
+.badge-btn:active { transform:scale(0.97); }
+.badge-btn.play-again { background:#FADB14;color:#1a0800; }
+.badge-btn.exit-home  { background:rgba(255,255,255,0.12);color:#fff;border:1px solid rgba(255,255,255,0.3);backdrop-filter:blur(6px); }
+
+/* Blob shape drawn in CSS; the original Figma-hosted blob images have expired */
+.choice-btn::before {
+  content:'';position:absolute;inset:0;
+  border-radius:58% 42% 55% 45% / 52% 48% 60% 40%;
+  background:radial-gradient(ellipse at 35% 30%,rgba(255,255,255,0.38),rgba(255,255,255,0.14) 60%,rgba(255,255,255,0.08));
+  border:2px solid rgba(255,255,255,0.45);
+  backdrop-filter:blur(6px);
+  box-shadow:0 8px 28px rgba(0,0,0,0.25);
+}
+.choice-btn[data-idx="1"]::before { border-radius:45% 55% 40% 60% / 60% 45% 55% 40%; }
+.choice-btn[data-idx="2"]::before { border-radius:52% 48% 62% 38% / 45% 58% 42% 55%; }
+.choice-btn[data-idx="3"]::before { border-radius:40% 60% 48% 52% / 55% 40% 60% 45%; }
+.choice-btn.correct-pick::before { background:radial-gradient(ellipse at 35% 30%,rgba(120,255,170,0.55),rgba(39,174,96,0.35)); }
+#obj-text.loading { opacity:0.7;animation:pulse 1.2s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:0.45} 50%{opacity:0.9} }
+#gen-tag { font-size:0.75em;color:#FADB14;margin-left:0.6em;letter-spacing:0.02em; }
+</style>
+</head>
+<body>
+<!-- ── Intro screen ── -->
+<div id="intro-screen">
+  <img id="intro-cover" src="cover.jpg" alt=""/>
+  <button id="play-now-btn">Play Now</button>
+</div>
+
+<div id="game">
+
+  <!-- ── Video background ── -->
+  <video id="scene-video" src="Scene.mp4" playsinline muted preload="auto"></video>
+
+  <!-- Door overlay (shown on correct answer) -->
+  <div id="door-wrapper">
+    <div id="door-frame-el"></div>
+    <div id="door-panel-el">
+      <div class="door-pane dp-top"></div>
+      <div class="door-pane dp-bottom"></div>
+      <div class="door-knob"></div>
+    </div>
+  </div>
+
+  <!-- P2 overlay for phone-lift animation -->
+  <div id="p2-overlay">
+    <svg width="66" height="126" viewBox="0 0 66 126" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="33" cy="20" rx="16" ry="16" fill="#FFB87A"/>
+      <ellipse cx="33" cy="20" rx="16" ry="16" fill="none" stroke="#e09040" stroke-width="1.5"/>
+      <ellipse cx="33" cy="8" rx="16" ry="9" fill="#1a0800"/>
+      <ellipse cx="17" cy="20" rx="5" ry="11" fill="#1a0800"/>
+      <ellipse cx="49" cy="20" rx="5" ry="11" fill="#1a0800"/>
+      <ellipse cx="27" cy="20" rx="2.5" ry="2.5" fill="#333"/>
+      <ellipse cx="39" cy="20" rx="2.5" ry="2.5" fill="#333"/>
+      <line x1="23" y1="15" x2="31" y2="16" stroke="#333" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="35" y1="16" x2="43" y2="15" stroke="#333" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M 28 28 Q 33 31 38 28" stroke="#555" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <rect x="28" y="36" width="10" height="7" fill="#FFB87A"/>
+      <rect x="18" y="43" width="30" height="32" fill="#e24a4a" rx="5"/>
+      <path d="M 25 43 L 33 52 L 41 43" fill="#c83232"/>
+      <line x1="18" y1="50" x2="8" y2="74" stroke="#e24a4a" stroke-width="8" stroke-linecap="round"/>
+      <circle cx="8" cy="75" r="5" fill="#FFB87A"/>
+      <line id="p2ra" x1="48" y1="50" x2="54" y2="70" stroke="#e24a4a" stroke-width="8" stroke-linecap="round"/>
+      <circle id="p2rh" cx="54" cy="72" r="5" fill="#FFB87A"/>
+      <rect id="p2pb" x="48" y="72" width="14" height="22" fill="#222" rx="2.5"/>
+      <rect id="p2ps" x="50" y="75" width="10" height="16" fill="#4fa3f7" rx="1"/>
+      <line id="p2pi" x1="51" y1="76" x2="53" y2="80" stroke="rgba(255,255,255,0.5)" stroke-width="1.5" stroke-linecap="round"/>
+      <rect x="19" y="74" width="11" height="26" fill="#2c3e50" rx="3"/>
+      <rect x="36" y="74" width="11" height="26" fill="#2c3e50" rx="3"/>
+      <ellipse cx="24" cy="99" rx="8" ry="4.5" fill="#1a252f"/>
+      <ellipse cx="41" cy="99" rx="8" ry="4.5" fill="#1a252f"/>
+    </svg>
+  </div>
+
+  <!-- Overlay tint -->
+  <div id="dark-overlay" class="pre-reveal"></div>
+
+  <!-- Per-choice scene flash -->
+  <div id="flash"></div>
+
+  <!-- HUD -->
+  <div id="hud">⭐ <span id="pts">0</span> pts<div id="badge">🏅 Friendly Helper Badge!</div></div>
+
+  <!-- Title -->
+  <div id="scene-title" class="pre-reveal">Select an action</div>
+  <div id="attempts-label" class="pre-reveal">Attempt <span id="attempt-num">1</span></div>
+
+  <!-- Top-right buttons -->
+  <div id="top-btns">
+    <button class="top-btn" id="replay-btn" onclick="replayGame()">
+      <span class="replay-icon">↺</span> Replay
+    </button>
+    <button class="top-btn" id="exit-btn" onclick="exitToHome()">⌂ Home</button>
+  </div>
+
+  <!-- Blob options -->
+  <button class="choice-btn" data-idx="0">
+    <img class="blob-img" src="https://www.figma.com/api/mcp/asset/480f2882-c0e6-480b-a4c2-74033d5f9c12" alt=""/>
+    <span class="ctext"></span>
+  </button>
+  <button class="choice-btn" data-idx="1">
+    <img class="blob-img" src="https://www.figma.com/api/mcp/asset/68561563-0928-48d7-91f2-f1a6a39cea31" alt=""/>
+    <span class="ctext"></span>
+  </button>
+  <button class="choice-btn" data-idx="2">
+    <img class="blob-img" src="https://www.figma.com/api/mcp/asset/18627871-c3f1-4fb0-88ad-bb0780401747" alt=""/>
+    <span class="ctext"></span>
+  </button>
+  <button class="choice-btn" data-idx="3">
+    <img class="blob-img" src="https://www.figma.com/api/mcp/asset/59064af8-eae5-4ca1-99a7-75d61fc8056c" alt=""/>
+    <span class="ctext"></span>
+  </button>
+
+  <!-- Bottom bar -->
+  <div id="objective">
+    <div id="obj-label">Current Objective <span id="gen-tag"></span></div>
+    <p id="obj-text"></p>
+  </div>
+
+</div>
+
+<!-- Badge screen (correct answer) -->
+<div id="badge-screen">
+  <div class="badge-glow">🏅</div>
+  <div class="badge-title">Friendly Helper Badge!</div>
+  <div class="badge-subtitle" id="badge-line"></div>
+  <div class="badge-pts" id="badge-pts">+100 pts ⭐</div>
+  <div class="badge-btns">
+    <button class="badge-btn play-again" onclick="replayGame()">↺ Play Again</button>
+    <button class="badge-btn exit-home"  onclick="exitToHome()">⌂ Home</button>
+  </div>
+</div>
+
+<!-- Feedback modal -->
+<div id="overlay">
+  <div class="modal">
+    <div class="m-emoji" id="m-emoji"></div>
+    <div class="m-title" id="m-title"></div>
+    <div class="m-msg"   id="m-msg"></div>
+    <div class="m-pts"   id="m-pts"></div>
+    <button class="m-btn" id="m-btn"></button>
+  </div>
+</div>
+
+<script>
+// ── Intro screen → Play Now ──
+const video = document.getElementById('scene-video');
+const STOP_TIME = 6.0; // stop just before door opens (~last 2s of 8s clip)
+let uiRevealed = false;
+let rafId = null;
+
+document.getElementById('play-now-btn').addEventListener('click', async () => {
+  const btn = document.getElementById('play-now-btn');
+  btn.textContent = 'Loading…';
+  await startRound();
+  btn.textContent = 'Play Now';
+  document.getElementById('intro-screen').classList.add('hidden');
+});
+
+function watchVideo() {
+  if (uiRevealed) return;
+  if (!video.paused && video.currentTime >= STOP_TIME) {
+    video.pause();
+    video.currentTime = STOP_TIME;
+    uiRevealed = true;
+    revealUI();
+    return;
+  }
+  rafId = requestAnimationFrame(watchVideo);
+}
+
+video.addEventListener('play', () => {
+  rafId = requestAnimationFrame(watchVideo);
+});
+video.addEventListener('ended', () => {
+  if (!uiRevealed) { uiRevealed = true; revealUI(); }
+});
+
+// ── Scenario ──
+// Each play fetches a freshly generated scenario from /api/scenario (Claude,
+// server-side). Choices arrive already shuffled; each carries a `role`
+// (helpful / ignore / careless / in_the_way) that drives its animation.
+// If the API is slow or down, the original hand-written scene is used.
+const FALLBACK = {
+  source: 'fallback',
+  scenario: 'A person is walking to the door with their hands full carrying a big box.',
+  badgeLine: 'You opened the door for someone who needed help.',
+  choices: [
+    { role:'ignore', correct:false, emoji:'😔', anim:'anim-buzz', label:'Continue using phone', title:"That's not very helpful!",
+      msg:"Being on your phone while someone needs help isn't being a good friend. Look up — someone may need you!" },
+    { role:'careless', correct:false, emoji:'😬', anim:'anim-shove', label:'Push the box', title:"Oops! That could hurt!",
+      msg:"Pushing the box could make them drop everything or hurt them. Kindness means helping gently and safely." },
+    { role:'helpful', correct:true, emoji:'🎉', anim:'anim-burst', label:'Open the door', title:"Amazing! Great job!",
+      msg:"Opening the door for someone whose hands are full is a wonderful, friendly act. That's what real helpers do!" },
+    { role:'in_the_way', correct:false, emoji:'😟', anim:'anim-slam', label:'Block the door', title:"That makes it worse!",
+      msg:"Blocking the door makes things even harder for them. A good friend steps up to help, not get in the way!" },
+  ],
+};
+const SCENARIO_TIMEOUT_MS = 25000;
+
+// Hide blob images that fail to load (their Figma asset links have expired); the CSS blob shows instead.
+document.querySelectorAll('.blob-img').forEach(img => {
+  const hide = () => { img.style.visibility = 'hidden'; };
+  if (img.complete && !img.naturalWidth) hide(); else img.addEventListener('error', hide);
+});
+
+let current = null;          // scenario on screen
+let scenarioPromise = null;  // scenario for the next reveal (prefetched)
+
+function loadScenario() {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), SCENARIO_TIMEOUT_MS);
+  return fetch('/api/scenario', { signal: ctrl.signal })
+    .then(r => r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status)))
+    .then(s => ({ ...s, source: 'ai' }))
+    .catch(err => { console.warn('Using fallback scenario:', err.message); return FALLBACK; })
+    .finally(() => clearTimeout(timer));
+}
+// Start generating as soon as the page loads; the intro + 6s video hide most of the wait.
+scenarioPromise = loadScenario();
+
+// Wait for the round's scenario, then play the clip of its setting
+// (watchVideo restarts via the 'play' event and reveals the choices).
+async function startRound() {
+  const p = scenarioPromise;
+  const s = await p;
+  if (p !== scenarioPromise) return; // replayed again while waiting
+  current = s;
+  const src = s.video || 'Scene.mp4';
+  if (video.getAttribute('src') !== src) video.src = src;
+  video.currentTime = 0;
+  video.play().catch(() => {});
+  // If playback is blocked (iOS Low Power Mode, background tab), don't strand
+  // the player on a frozen frame: reveal the choices anyway.
+  setTimeout(() => {
+    if (p === scenarioPromise && !uiRevealed && video.currentTime < 0.1) {
+      uiRevealed = true;
+      revealUI();
+    }
+  }, 2500);
+}
+
+function applyScenario(s) {
+  current = s;
+  document.querySelectorAll('.choice-btn').forEach(b => {
+    b.querySelector('.ctext').textContent = s.choices[parseInt(b.dataset.idx)].label;
+  });
+  const obj = document.getElementById('obj-text');
+  obj.textContent = `"${s.scenario}"`;
+  obj.classList.remove('loading');
+  document.getElementById('gen-tag').textContent = s.source === 'ai' ? '✨ new every play' : '';
+  document.getElementById('badge-line').textContent = s.badgeLine;
+}
+
+// ── Game state ──
+let points = 0, answered = false, badgeEarned = false;
+let lastPickedIdx = -1, attemptCount = 1;
+const disabledIdxs = new Set();
+
+async function revealUI() {
+  document.getElementById('dark-overlay').classList.add('visible');
+  document.getElementById('scene-title').classList.add('visible');
+  document.getElementById('attempts-label').classList.add('visible');
+  const obj = document.getElementById('obj-text');
+  const myPromise = scenarioPromise;
+  if (!current) {
+    obj.textContent = 'Thinking up a new situation…';
+    obj.classList.add('loading');
+  }
+  document.getElementById('objective').classList.add('show');
+  const s = await myPromise;
+  if (myPromise !== scenarioPromise || !uiRevealed) return; // replayed/exited while waiting
+  applyScenario(s);
+  document.querySelectorAll('.choice-btn').forEach(b => b.classList.add('revealed'));
+}
+
+// ── Button handlers ──
+const FLASH_STYLES = {
+  ignore:     'rgba(220,50,50,0.18)',  // red
+  careless:   'rgba(255,140,0,0.18)',  // orange
+  helpful:    'rgba(39,174,96,0.28)',  // green
+  in_the_way: 'rgba(80,0,120,0.22)',   // purple
+};
+const ANIM_DURATIONS = { 'anim-buzz':550, 'anim-shove':600, 'anim-burst':700, 'anim-slam':550 };
+
+document.querySelectorAll('.choice-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (answered) return;
+    answered = true;
+    const idx = parseInt(btn.dataset.idx);
+    lastPickedIdx = idx;
+
+    // Hide all other buttons immediately
+    document.querySelectorAll('.choice-btn').forEach(b => {
+      if (b !== btn) b.classList.add('force-hide');
+    });
+
+    // Play animation on chosen button — force-show keeps it visible throughout
+    btn.classList.add('force-show');
+    btn.classList.remove('revealed', 'static-shown');
+    void btn.offsetWidth;
+    const choice = current.choices[idx];
+    btn.classList.add(choice.anim);
+    if (choice.correct) btn.classList.add('correct-pick');
+
+    // Scene flash
+    const flash = document.getElementById('flash');
+    flash.style.background = FLASH_STYLES[choice.role];
+    flash.classList.add('show');
+    setTimeout(() => flash.classList.remove('show'), 350);
+
+    // Play scene reaction immediately, then show modal after 3s
+    playSceneReaction(choice.role);
+    setTimeout(() => showFeedback(idx), ANIM_DURATIONS[choice.anim] + 3000);
+  });
+});
+
+// The door and phone overlays only make sense for the original hand-made scene;
+// generated scenes get the generic reactions (confetti, shake, purple dim).
+function playSceneReaction(role) {
+  const original = current.source === 'fallback';
+  if (role === 'helpful') {
+    if (original) {
+      document.getElementById('door-wrapper').style.display = 'block';
+      setTimeout(() => document.getElementById('door-panel-el').classList.add('open'), 100);
+    }
+    setTimeout(launchConfetti, original ? 700 : 200);
+  } else if (role === 'careless') {
+    // Push — shake the video
+    const vid = document.getElementById('scene-video');
+    let t = 0;
+    const shake = setInterval(() => {
+      t++;
+      vid.style.transform = t % 2 === 0 ? 'translateX(8px)' : 'translateX(-8px)';
+      if (t >= 12) { clearInterval(shake); vid.style.transform = ''; }
+    }, 55);
+  } else if (role === 'ignore' && original) {
+    // Phone — show p2 overlay and lift arm to face
+    const p2ol = document.getElementById('p2-overlay');
+    p2ol.classList.add('show');
+    resetPhoneArm();
+    const arm  = document.getElementById('p2ra');
+    const hand = document.getElementById('p2rh');
+    const pb   = document.getElementById('p2pb');
+    const ps   = document.getElementById('p2ps');
+    const pi   = document.getElementById('p2pi');
+    const start = { ax2:54,ay2:70, hx:54,hy:72, px:48,py:72, sx:50,sy:75, i1x:51,i1y:76,i2x:53,i2y:80 };
+    const end   = { ax2:36,ay2:25, hx:35,hy:22, px:22,py:8,  sx:24,sy:11, i1x:25,i1y:12,i2x:27,i2y:16 };
+    let t = 0, dur = 40;
+    const lerpAnim = setInterval(() => {
+      t = Math.min(t + 1, dur);
+      const e = t / dur;
+      const s = e < 0.5 ? 2*e*e : -1+(4-2*e)*e;
+      const l = (a, b) => a + (b - a) * s;
+      arm.setAttribute('x2', l(start.ax2, end.ax2));
+      arm.setAttribute('y2', l(start.ay2, end.ay2));
+      hand.setAttribute('cx', l(start.hx, end.hx));
+      hand.setAttribute('cy', l(start.hy, end.hy));
+      pb.setAttribute('x', l(start.px, end.px));
+      pb.setAttribute('y', l(start.py, end.py));
+      ps.setAttribute('x', l(start.sx, end.sx));
+      ps.setAttribute('y', l(start.sy, end.sy));
+      pi.setAttribute('x1', l(start.i1x, end.i1x));
+      pi.setAttribute('y1', l(start.i1y, end.i1y));
+      pi.setAttribute('x2', l(start.i2x, end.i2x));
+      pi.setAttribute('y2', l(start.i2y, end.i2y));
+      if (t >= dur) clearInterval(lerpAnim);
+    }, 16);
+  } else if (role === 'in_the_way') {
+    // Block — darken overlay
+    const overlay = document.getElementById('dark-overlay');
+    overlay.style.background = 'rgba(60,0,80,0.55)';
+    setTimeout(() => { overlay.style.background = ''; }, 2200);
+  }
+}
+
+function showFeedback(idx) {
+  const a = current.choices[idx];
+  document.getElementById('m-emoji').textContent = a.emoji;
+  document.getElementById('m-title').textContent = a.title;
+  document.getElementById('m-title').className   = 'm-title ' + (a.correct ? 'correct' : 'wrong');
+  document.getElementById('m-msg').textContent   = a.msg;
+
+  const ptsEl = document.getElementById('m-pts');
+  const btn   = document.getElementById('m-btn');
+
+  if (a.correct) {
+    points += 100;
+    badgeEarned = true;
+    document.getElementById('pts').textContent = points;
+    document.getElementById('badge-pts').textContent = `+${points} pts ⭐`;
+    document.getElementById('top-btns').style.display = 'none';
+    document.getElementById('badge-screen').classList.add('show');
+  } else {
+    ptsEl.style.display = 'none';
+    btn.textContent = '↩️ Try Again'; btn.className = 'm-btn wrong-style';
+    document.getElementById('overlay').classList.add('show');
+  }
+}
+
+document.getElementById('m-btn').addEventListener('click', () => {
+  const a = current.choices[lastPickedIdx];
+  document.getElementById('overlay').classList.remove('show');
+  document.getElementById('door-panel-el').classList.remove('open');
+
+  if (!a.correct) {
+    disabledIdxs.add(lastPickedIdx);
+    attemptCount++;
+    document.getElementById('attempt-num').textContent = attemptCount;
+    resetPhoneArm();
+    document.getElementById('p2-overlay').classList.remove('show');
+    document.getElementById('door-wrapper').style.display = 'none';
+    document.querySelectorAll('.choice-btn').forEach(b => {
+      const i = parseInt(b.dataset.idx);
+      const wasWrong = disabledIdxs.has(i);
+      // wrong-pick: static (no re-pop animation), others: static-shown too to avoid re-popping
+      b.className = 'choice-btn static-shown' + (wasWrong ? ' wrong-pick' : '');
+      b.disabled = wasWrong;
+    });
+    answered = false;
+  }
+});
+
+function resetPhoneArm() {
+  const arm  = document.getElementById('p2ra');
+  const hand = document.getElementById('p2rh');
+  const pb   = document.getElementById('p2pb');
+  const ps   = document.getElementById('p2ps');
+  const pi   = document.getElementById('p2pi');
+  if (!arm) return;
+  arm.setAttribute('x2',54); arm.setAttribute('y2',70);
+  hand.setAttribute('cx',54); hand.setAttribute('cy',72);
+  pb.setAttribute('x',48); pb.setAttribute('y',72);
+  ps.setAttribute('x',50); ps.setAttribute('y',75);
+  pi.setAttribute('x1',51); pi.setAttribute('y1',76);
+  pi.setAttribute('x2',53); pi.setAttribute('y2',80);
+}
+
+function resetScene() {
+  answered = false;
+  lastPickedIdx = -1;
+  uiRevealed = false;
+  attemptCount = 1;
+  disabledIdxs.clear();
+  document.getElementById('attempt-num').textContent = '1';
+  if (rafId) cancelAnimationFrame(rafId);
+
+  document.getElementById('overlay').classList.remove('show');
+  document.getElementById('badge-screen').classList.remove('show');
+  document.getElementById('top-btns').style.display = '';
+  document.getElementById('door-panel-el').classList.remove('open');
+  document.getElementById('door-wrapper').style.display = 'none';
+  document.getElementById('p2-overlay').classList.remove('show');
+  resetPhoneArm();
+  video.style.transform = '';
+
+  document.getElementById('dark-overlay').classList.remove('visible');
+  document.getElementById('scene-title').classList.remove('visible');
+  document.getElementById('attempts-label').classList.remove('visible');
+  document.getElementById('objective').classList.remove('show');
+  document.querySelectorAll('.choice-btn').forEach(b => {
+    b.className = 'choice-btn';
+    b.disabled = false;
+  });
+  // Ask for the next scenario now so it is ready by the time the video pauses.
+  current = null;
+  scenarioPromise = loadScenario();
+}
+
+function replayGame() {
+  resetScene();
+  startRound();
+}
+
+function exitToHome() {
+  resetScene();
+  video.pause();
+  video.currentTime = 0;
+  document.getElementById('intro-screen').classList.remove('hidden');
+}
+
+function launchConfetti() {
+  const colors = ['#ffd700','#ff6b6b','#4ecdc4','#45b7d1','#96ceb4','#ff9ff3','#a8e6cf'];
+  for (let i = 0; i < 70; i++) {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.className = 'conf';
+      const size = Math.random() * 12 + 5;
+      el.style.cssText = `left:${Math.random()*innerWidth}px;top:${Math.random()*innerHeight*.5}px;
+        width:${size}px;height:${size}px;background:${colors[Math.floor(Math.random()*colors.length)]};
+        --dur:${(Math.random()*1.2+1).toFixed(2)}s;transform:rotate(${Math.random()*360}deg);
+        border-radius:${Math.random()>.5?'50%':'3px'}`;
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 2800);
+    }, i * 35);
+  }
+}
+</script>
+</body>
+</html>

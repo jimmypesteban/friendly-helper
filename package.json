@@ -1,0 +1,15 @@
+{
+  "name": "friendly-helper",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/dev-server.mjs",
+    "eval": "node scripts/eval.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@google/genai": "^2.25.0"
+  }
+}
