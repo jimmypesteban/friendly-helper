@@ -268,77 +268,146 @@ html, body { width: 100%; height: 100%; overflow: hidden; }
 }
 #flash.show { opacity:1; }
 
-/* Modal */
-#overlay {
-  position:fixed;inset:0;background:rgba(0,0,0,0.65);backdrop-filter:blur(6px);
-  display:none;align-items:center;justify-content:center;z-index:200;
+/* ── Popups ──
+   Built from the game's own pieces: the gold Play Now button, the frosted
+   glass of the choice blobs, and the gold-rimmed glass bubbles on the cover. */
+:root {
+  --gold:#FADB14; --cocoa:#4a2e19; --cocoa-line:#795a3b;
+  --cream:#FFF8E1; --peach:#FFC59E;
+  --glass:rgba(34,22,10,0.66); --rim:rgba(250,219,20,0.55);
 }
-#overlay.show{display:flex;}
-.modal { background:#fff;border-radius:24px;padding:40px 36px;text-align:center;max-width:400px;width:90%;animation:popIn 0.4s cubic-bezier(0.175,0.885,0.32,1.275); }
+
+/* Primary button: same as Play Now */
+.game-btn {
+  background:var(--gold);border:4px solid var(--cocoa-line);border-radius:80px;
+  padding:12px clamp(20px,5vw,36px);max-width:100%;color:var(--cocoa);cursor:pointer;
+  font-family:'Avenir','Montserrat',sans-serif;font-weight:900;font-size:clamp(16px,1.5vw,22px);
+  box-shadow:0 6px 24px rgba(0,0,0,0.25);transition:transform 0.15s,filter 0.15s;white-space:nowrap;
+}
+.game-btn:hover  { transform:scale(1.06);filter:brightness(1.08); }
+.game-btn:active { transform:scale(0.97); }
+.game-btn:focus-visible, .ghost-btn:focus-visible { outline:3px solid var(--cream);outline-offset:3px; }
+/* Secondary button: same glass as the top-right buttons */
+.ghost-btn {
+  background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.35);border-radius:80px;
+  padding:14px clamp(20px,5vw,30px);max-width:100%;color:#fff;cursor:pointer;backdrop-filter:blur(6px);
+  font-family:'Avenir','Montserrat',sans-serif;font-weight:900;font-size:clamp(15px,1.4vw,20px);
+  transition:transform 0.15s,background 0.15s;white-space:nowrap;
+}
+.ghost-btn:hover  { background:rgba(255,255,255,0.22);transform:scale(1.05); }
+.ghost-btn:active { transform:scale(0.97); }
+
+/* Shared glass card */
+.glass-card {
+  position:relative;text-align:center;
+  background:linear-gradient(180deg,rgba(255,255,255,0.10),rgba(255,255,255,0) 40%),var(--glass);
+  border:2px solid var(--rim);border-radius:32px;
+  box-shadow:0 0 0 6px rgba(250,219,20,0.08),0 0 40px rgba(250,219,20,0.18),0 24px 60px rgba(0,0,0,0.45),inset 0 1px 0 rgba(255,255,255,0.25);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  color:var(--cream);font-family:'Lexend',sans-serif;
+}
+/* Gold-rimmed glass bubble, like the icons on the cover */
+.bubble {
+  display:flex;align-items:center;justify-content:center;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,rgba(255,255,255,0.55),rgba(255,255,255,0.16) 55%,rgba(255,255,255,0.08));
+  border:3px solid var(--gold);
+  box-shadow:0 0 24px rgba(250,219,20,0.55),inset 0 2px 6px rgba(255,255,255,0.5);
+  backdrop-filter:blur(8px);
+}
+
+#overlay {
+  position:fixed;inset:0;z-index:200;padding:16px;
+  background:radial-gradient(ellipse at center,rgba(20,12,4,0.45),rgba(10,6,2,0.75));
+  backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);
+  display:none;align-items:center;justify-content:center;overflow-y:auto;
+}
+#overlay.show { display:flex; }
+.modal {
+  width:100%;max-width:420px;margin-top:44px;padding:60px clamp(18px,5vw,28px) 28px;
+  animation:popIn 0.45s cubic-bezier(0.175,0.885,0.32,1.275);
+}
 @keyframes popIn { 0%{transform:scale(0.4);opacity:0} 100%{transform:scale(1);opacity:1} }
-.m-emoji{ font-size:3.5rem;margin-bottom:12px; }
-.m-title{ font-size:1.4rem;font-weight:800;margin-bottom:10px; }
-.m-title.wrong  { color:#e74c3c; }
-.m-title.correct{ color:#27ae60; }
-.m-msg { color:#555;line-height:1.65;font-size:0.93rem;margin-bottom:20px; }
-.m-pts { font-size:1.1rem;font-weight:700;color:#e67e22;margin-bottom:18px;display:none; }
-.m-btn { border:none;border-radius:30px;padding:13px 36px;font-size:0.97rem;font-weight:700;cursor:pointer;transition:transform 0.15s; }
-.m-btn:hover{transform:scale(1.05);}
-.m-btn.wrong-style{ background:linear-gradient(135deg,#667eea,#764ba2);color:#fff; }
-.m-btn.right-style{ background:linear-gradient(135deg,#11998e,#38ef7d);color:#fff; }
+.m-bubble {
+  position:absolute;top:-46px;left:50%;width:92px;height:92px;margin-left:-46px;
+  animation:bubbleWobble 2.4s 0.5s ease-in-out infinite;
+}
+.m-emoji { font-size:46px;line-height:1; }
+@keyframes bubbleWobble { 0%,100%{transform:rotate(0)} 25%{transform:rotate(-6deg)} 75%{transform:rotate(6deg)} }
+.m-eyebrow {
+  font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:rgba(255,248,225,0.6);margin-bottom:6px;
+}
+.m-choice {
+  display:inline-block;max-width:100%;margin-bottom:16px;padding:6px 16px;border-radius:40px;
+  background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.3);
+  font-family:'Avenir','Montserrat',sans-serif;font-weight:900;font-size:15px;color:#fff;
+}
+.m-title {
+  font-family:'Avenir','Montserrat',sans-serif;font-weight:900;font-size:clamp(24px,2.2vw,30px);
+  line-height:1.15;margin-bottom:10px;text-shadow:0 2px 0 rgba(0,0,0,0.35);
+}
+.m-title.wrong   { color:var(--peach); }
+.m-title.correct { color:var(--gold); }
+.m-msg { font-size:16px;line-height:1.55;color:rgba(255,248,225,0.9);margin:0 auto 24px;max-width:34ch; }
+.m-pts { display:none; }
 
 /* Confetti */
-.conf { position:fixed;pointer-events:none;border-radius:3px;z-index:300;animation:floatUp var(--dur) ease forwards; }
+.conf { position:fixed;pointer-events:none;border-radius:3px;z-index:550;animation:floatUp var(--dur) ease forwards; }
 @keyframes floatUp { 0%{transform:translateY(0) rotate(0deg);opacity:1} 100%{transform:translateY(-380px) rotate(720deg);opacity:0} }
 
 /* ── Badge screen ── */
 #badge-screen {
-  position:fixed;inset:0;z-index:500;
-  background:linear-gradient(135deg,#1a0a00 0%,#3b1f00 50%,#1a0a00 100%);
-  display:none;flex-direction:column;align-items:center;justify-content:center;
-  gap:3vh;
+  position:fixed;inset:0;z-index:500;padding:16px;overflow-y:auto;
+  background:radial-gradient(circle at 50% 40%,rgba(250,219,20,0.22),rgba(20,12,4,0.55) 45%,rgba(10,6,2,0.8));
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  display:none;align-items:center;justify-content:center;
 }
 #badge-screen.show { display:flex; }
-.badge-glow {
-  font-size:clamp(64px,14vw,160px);
-  animation:badgeBounce 0.7s cubic-bezier(0.175,0.885,0.32,1.275) forwards,
-            badgePulse 2.5s 0.7s ease-in-out infinite;
-  filter:drop-shadow(0 0 32px rgba(255,215,0,0.7));
+.badge-card {
+  width:100%;max-width:480px;margin-top:64px;padding:84px clamp(18px,5vw,28px) 30px;
+  animation:popIn 0.5s cubic-bezier(0.175,0.885,0.32,1.275) both;
 }
-@keyframes badgeBounce { 0%{transform:scale(0) rotate(-20deg);opacity:0} 100%{transform:scale(1) rotate(0deg);opacity:1} }
-@keyframes badgePulse  { 0%,100%{filter:drop-shadow(0 0 24px rgba(255,215,0,0.5))} 50%{filter:drop-shadow(0 0 48px rgba(255,215,0,0.95))} }
+/* Slow sunburst behind the medal */
+.badge-rays {
+  position:absolute;top:-130px;left:50%;width:360px;height:360px;margin-left:-180px;pointer-events:none;
+  background:repeating-conic-gradient(rgba(250,219,20,0.22) 0deg 10deg,transparent 10deg 24deg);
+  -webkit-mask:radial-gradient(circle,#000 18%,transparent 62%);mask:radial-gradient(circle,#000 18%,transparent 62%);
+  animation:raysSpin 18s linear infinite;
+}
+@keyframes raysSpin { to { transform:rotate(360deg); } }
+.badge-medal {
+  position:absolute;top:-64px;left:50%;width:128px;height:128px;margin-left:-64px;font-size:68px;line-height:1;
+  animation:badgeBounce 0.7s 0.15s cubic-bezier(0.175,0.885,0.32,1.275) both,badgePulse 2.5s 0.9s ease-in-out infinite;
+}
+@keyframes badgeBounce { 0%{transform:scale(0) rotate(-20deg);opacity:0} 100%{transform:scale(1) rotate(0);opacity:1} }
+@keyframes badgePulse  { 0%,100%{box-shadow:0 0 24px rgba(250,219,20,0.5),inset 0 2px 6px rgba(255,255,255,0.5)} 50%{box-shadow:0 0 56px rgba(250,219,20,0.95),inset 0 2px 6px rgba(255,255,255,0.5)} }
+.badge-eyebrow {
+  font-size:12px;letter-spacing:0.16em;text-transform:uppercase;color:var(--gold);margin-bottom:6px;
+  animation:popIn 0.4s 0.4s both;
+}
+/* Gold with a cocoa outline, like the cover title */
 .badge-title {
-  font-family:'Avenir','Montserrat',sans-serif;font-weight:900;
-  font-size:clamp(20px,3.5vw,56px);color:#FADB14;
-  text-shadow:0 2px 16px rgba(0,0,0,0.6);text-align:center;
-  animation:popIn 0.5s 0.5s both;
+  font-family:'Avenir','Montserrat',sans-serif;font-weight:900;font-size:clamp(30px,3.4vw,46px);line-height:1.05;
+  color:var(--gold);margin-bottom:12px;
+  text-shadow:0 3px 0 var(--cocoa-line),0 -1px 0 var(--cocoa-line),2px 0 0 var(--cocoa-line),-2px 0 0 var(--cocoa-line),0 8px 20px rgba(0,0,0,0.45);
+  animation:popIn 0.45s 0.5s both;
 }
 .badge-subtitle {
-  font-family:'Lexend',sans-serif;font-weight:400;
-  font-size:clamp(13px,1.6vw,26px);color:rgba(255,255,255,0.75);
-  animation:popIn 0.5s 0.65s both;
+  font-size:17px;line-height:1.5;color:rgba(255,248,225,0.92);margin:0 auto 18px;max-width:32ch;
+  animation:popIn 0.45s 0.62s both;
 }
 .badge-pts {
-  font-family:'Avenir','Montserrat',sans-serif;font-weight:900;
-  font-size:clamp(16px,2.2vw,36px);color:#fff;
-  background:rgba(255,215,0,0.15);border:1px solid rgba(255,215,0,0.35);
-  border-radius:40px;padding:0.8vh 2.5vw;
-  animation:popIn 0.5s 0.8s both;
+  display:inline-block;white-space:nowrap;margin-bottom:24px;padding:8px 22px;border-radius:40px;
+  background:rgba(250,219,20,0.16);border:2px solid var(--rim);
+  font-family:'Avenir','Montserrat',sans-serif;font-weight:900;font-size:20px;color:#fff;
+  animation:popIn 0.45s 0.74s both;
 }
 .badge-btns {
-  display:flex;gap:1.5vw;margin-top:1vh;
-  animation:popIn 0.5s 1s both;
+  display:flex;flex-wrap:wrap;justify-content:center;gap:12px;
+  animation:popIn 0.45s 0.86s both;
 }
-.badge-btn {
-  border:none;border-radius:50px;padding:clamp(12px,1.6vh,22px) clamp(32px,4vw,70px);
-  font-family:'Avenir','Montserrat',sans-serif;font-weight:900;
-  font-size:clamp(13px,1.4vw,22px);cursor:pointer;
-  transition:transform 0.15s,filter 0.15s;
+@media (prefers-reduced-motion: reduce) {
+  .badge-rays, .m-bubble, .badge-medal { animation:none; }
 }
-.badge-btn:hover  { transform:scale(1.06); filter:brightness(1.1); }
-.badge-btn:active { transform:scale(0.97); }
-.badge-btn.play-again { background:#FADB14;color:#1a0800; }
-.badge-btn.exit-home  { background:rgba(255,255,255,0.12);color:#fff;border:1px solid rgba(255,255,255,0.3);backdrop-filter:blur(6px); }
 
 /* Blob shape drawn in CSS; the original Figma-hosted blob images have expired */
 .choice-btn::before {
@@ -457,25 +526,31 @@ html, body { width: 100%; height: 100%; overflow: hidden; }
 </div>
 
 <!-- Badge screen (correct answer) -->
-<div id="badge-screen">
-  <div class="badge-glow">🏅</div>
-  <div class="badge-title">Friendly Helper Badge!</div>
-  <div class="badge-subtitle" id="badge-line"></div>
-  <div class="badge-pts" id="badge-pts">+100 pts ⭐</div>
-  <div class="badge-btns">
-    <button class="badge-btn play-again" onclick="replayGame()">↺ Play Again</button>
-    <button class="badge-btn exit-home"  onclick="exitToHome()">⌂ Home</button>
+<div id="badge-screen" role="dialog" aria-modal="true" aria-labelledby="badge-title">
+  <div class="glass-card badge-card">
+    <div class="badge-rays"></div>
+    <div class="bubble badge-medal">🏅</div>
+    <div class="badge-eyebrow">Badge earned</div>
+    <div class="badge-title" id="badge-title">Friendly Helper</div>
+    <p class="badge-subtitle" id="badge-line"></p>
+    <div class="badge-pts" id="badge-pts">+100 pts ⭐</div>
+    <div class="badge-btns">
+      <button class="game-btn" onclick="replayGame()">↺ Play again</button>
+      <button class="ghost-btn" onclick="exitToHome()">⌂ Home</button>
+    </div>
   </div>
 </div>
 
 <!-- Feedback modal -->
-<div id="overlay">
-  <div class="modal">
-    <div class="m-emoji" id="m-emoji"></div>
+<div id="overlay" role="dialog" aria-modal="true" aria-labelledby="m-title">
+  <div class="glass-card modal">
+    <div class="bubble m-bubble"><span class="m-emoji" id="m-emoji"></span></div>
+    <div class="m-eyebrow">You chose</div>
+    <div class="m-choice" id="m-choice"></div>
     <div class="m-title" id="m-title"></div>
-    <div class="m-msg"   id="m-msg"></div>
-    <div class="m-pts"   id="m-pts"></div>
-    <button class="m-btn" id="m-btn"></button>
+    <p class="m-msg" id="m-msg"></p>
+    <div class="m-pts" id="m-pts"></div>
+    <button class="game-btn" id="m-btn"></button>
   </div>
 </div>
 
@@ -756,6 +831,7 @@ function showFeedback(idx) {
   document.getElementById('m-title').textContent = a.title;
   document.getElementById('m-title').className   = 'm-title ' + (a.correct ? 'correct' : 'wrong');
   document.getElementById('m-msg').textContent   = a.msg;
+  document.getElementById('m-choice').textContent = a.label;
 
   const ptsEl = document.getElementById('m-pts');
   const btn   = document.getElementById('m-btn');
@@ -769,8 +845,9 @@ function showFeedback(idx) {
     document.getElementById('badge-screen').classList.add('show');
   } else {
     ptsEl.style.display = 'none';
-    btn.textContent = '↩️ Try Again'; btn.className = 'm-btn wrong-style';
+    btn.textContent = '↺ Try again';
     document.getElementById('overlay').classList.add('show');
+    btn.focus({ preventScroll: true });
   }
 }
 
