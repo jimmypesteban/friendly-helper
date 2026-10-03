@@ -355,7 +355,6 @@ html, body { width: 100%; height: 100%; overflow: hidden; }
 .choice-btn.correct-pick::before { background:radial-gradient(ellipse at 35% 30%,rgba(120,255,170,0.55),rgba(39,174,96,0.35)); }
 #obj-text.loading { opacity:0.7;animation:pulse 1.2s ease-in-out infinite; }
 @keyframes pulse { 0%,100%{opacity:0.45} 50%{opacity:0.9} }
-#gen-tag { font-size:0.75em;color:#FADB14;margin-left:0.6em;letter-spacing:0.02em; }
 </style>
 </head>
 <body>
@@ -451,7 +450,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; }
 
   <!-- Bottom bar -->
   <div id="objective">
-    <div id="obj-label">Current Objective <span id="gen-tag"></span></div>
+    <div id="obj-label">Current Objective</div>
     <p id="obj-text"></p>
   </div>
 
@@ -514,13 +513,14 @@ video.addEventListener('ended', () => {
   if (!uiRevealed) { uiRevealed = true; revealUI(); }
 });
 
-// ── Scenario ──
-// Each play fetches a freshly generated scenario from /api/scenario (Claude,
-// server-side). Choices arrive already shuffled; each carries a `role`
-// (helpful / ignore / careless / in_the_way) that drives its animation.
-// If the API is slow or down, the original hand-written scene is used.
+// ── Scenarios ──
+// Ten fixed scenarios in scenarios.json, one per background clip, each built
+// around a person who is visible in that clip's frozen frame. Rounds are dealt
+// from a shuffled deck, so all ten play before any repeats. Each choice carries
+// a `role` (helpful / ignore / careless / in_the_way) that drives its animation.
+// If scenarios.json can't load, the original hand-written scene is used.
 const FALLBACK = {
-  source: 'fallback',
+  id: 'lobby',
   scenario: 'A person is walking to the door with their hands full carrying a big box.',
   badgeLine: 'You opened the door for someone who needed help.',
   choices: [
@@ -534,7 +534,35 @@ const FALLBACK = {
       msg:"Blocking the door makes things even harder for them. A good friend steps up to help, not get in the way!" },
   ],
 };
-const SCENARIO_TIMEOUT_MS = 25000;
+
+const ROLE_META = {
+  helpful:    { correct: true,  emoji: '🎉', anim: 'anim-burst' },
+  ignore:     { correct: false, emoji: '😔', anim: 'anim-buzz' },
+  careless:   { correct: false, emoji: '😬', anim: 'anim-shove' },
+  in_the_way: { correct: false, emoji: '😟', anim: 'anim-slam' },
+};
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+// scenarios.json entry → what the game renders, with the choices shuffled so
+// the right answer isn't always in the same blob.
+function toRound(s) {
+  return {
+    id: s.id,
+    video: s.clip,
+    scenario: s.scenario,
+    badgeLine: s.badge_line,
+    choices: shuffle(Object.keys(ROLE_META).map(role => ({
+      role, label: s[role].label, title: s[role].reaction_title, msg: s[role].feedback, ...ROLE_META[role],
+    }))),
+  };
+}
 
 // Hide blob images that fail to load (their Figma asset links have expired); the CSS blob shows instead.
 document.querySelectorAll('.blob-img').forEach(img => {
@@ -543,18 +571,26 @@ document.querySelectorAll('.blob-img').forEach(img => {
 });
 
 let current = null;          // scenario on screen
-let scenarioPromise = null;  // scenario for the next reveal (prefetched)
+let scenarioPromise = null;  // scenario for the next round
+let lastId = null;
+let deck = [];
 
-function loadScenario() {
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), SCENARIO_TIMEOUT_MS);
-  return fetch('/api/scenario', { signal: ctrl.signal })
-    .then(r => r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status)))
-    .then(s => ({ ...s, source: 'ai' }))
-    .catch(err => { console.warn('Using fallback scenario:', err.message); return FALLBACK; })
-    .finally(() => clearTimeout(timer));
+const scenariosPromise = fetch('scenarios.json')
+  .then(r => r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status)))
+  .catch(err => { console.warn('Using fallback scenario:', err.message); return []; });
+
+async function loadScenario() {
+  const all = await scenariosPromise;
+  if (!all.length) return FALLBACK;
+  if (!deck.length) {
+    deck = shuffle([...all]);
+    // Don't repeat the last scenario across a reshuffle.
+    if (deck.length > 1 && deck[deck.length - 1].id === lastId) deck.unshift(deck.pop());
+  }
+  const next = deck.pop();
+  lastId = next.id;
+  return toRound(next);
 }
-// Start generating as soon as the page loads; the intro + 6s video hide most of the wait.
 scenarioPromise = loadScenario();
 
 // Wait for the round's scenario, then play the clip of its setting
@@ -572,6 +608,9 @@ async function startRound() {
   // the player on a frozen frame: reveal the choices anyway.
   setTimeout(() => {
     if (p === scenarioPromise && !uiRevealed && video.currentTime < 0.1) {
+      // Show the frame the scenario was written around, not the first frame.
+      const seekToStop = () => { video.currentTime = Math.min(STOP_TIME, video.duration - 0.1); };
+      if (video.readyState >= 1) seekToStop(); else video.addEventListener('loadedmetadata', seekToStop, { once: true });
       uiRevealed = true;
       revealUI();
     }
@@ -586,7 +625,6 @@ function applyScenario(s) {
   const obj = document.getElementById('obj-text');
   obj.textContent = `"${s.scenario}"`;
   obj.classList.remove('loading');
-  document.getElementById('gen-tag').textContent = s.source === 'ai' ? '✨ new every play' : '';
   document.getElementById('badge-line').textContent = s.badgeLine;
 }
 
@@ -653,10 +691,10 @@ document.querySelectorAll('.choice-btn').forEach(btn => {
   });
 });
 
-// The door and phone overlays only make sense for the original hand-made scene;
-// generated scenes get the generic reactions (confetti, shake, purple dim).
+// The door and phone overlays were drawn for the lobby clip, so only the lobby
+// uses them; other scenes get the generic reactions (confetti, shake, purple dim).
 function playSceneReaction(role) {
-  const original = current.source === 'fallback';
+  const original = current.id === 'lobby';
   if (role === 'helpful') {
     if (original) {
       document.getElementById('door-wrapper').style.display = 'block';
