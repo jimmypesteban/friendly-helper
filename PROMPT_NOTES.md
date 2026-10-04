@@ -6,7 +6,7 @@ Model: `gemini-3.8-flash` (generator), `gemini-3.1-pro-preview` (judge), `veo-3.
 
 ## Current shipped version: 10 fixed scenarios
 
-The live game no longer calls an LLM. It plays 10 fixed scenarios, one per background clip, dealt in shuffled order so all 10 play before any repeats. The answer order is still shuffled every round.
+The live game no longer calls an LLM. It plays 10 fixed scenarios, one per background clip, in a fixed order (1 to 10, then looping). The answer order is still shuffled every round.
 
 Why the change: live generation meant per-play cost, a hard dependency on API credits (which ran out in production; the game fell back to the original scene), and text that could only loosely match a fixed video. With 10 clips, 10 well-matched scenarios is the better product.
 

@@ -590,8 +590,8 @@ video.addEventListener('ended', () => {
 
 // ── Scenarios ──
 // Ten fixed scenarios in scenarios.json, one per background clip, each built
-// around a person who is visible in that clip's frozen frame. Rounds are dealt
-// from a shuffled deck, so all ten play before any repeats. Each choice carries
+// around a person who is visible in that clip's frozen frame. They play in
+// file order (1 to 10), then loop back to the first. Each choice carries
 // a `role` (helpful / ignore / careless / in_the_way) that drives its animation.
 // If scenarios.json can't load, the original hand-written scene is used.
 const FALLBACK = {
@@ -647,8 +647,7 @@ document.querySelectorAll('.blob-img').forEach(img => {
 
 let current = null;          // scenario on screen
 let scenarioPromise = null;  // scenario for the next round
-let lastId = null;
-let deck = [];
+let nextIndex = 0;           // position in scenarios.json for the next round
 
 const scenariosPromise = fetch('scenarios.json')
   .then(r => r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status)))
@@ -657,13 +656,8 @@ const scenariosPromise = fetch('scenarios.json')
 async function loadScenario() {
   const all = await scenariosPromise;
   if (!all.length) return FALLBACK;
-  if (!deck.length) {
-    deck = shuffle([...all]);
-    // Don't repeat the last scenario across a reshuffle.
-    if (deck.length > 1 && deck[deck.length - 1].id === lastId) deck.unshift(deck.pop());
-  }
-  const next = deck.pop();
-  lastId = next.id;
+  const next = all[nextIndex % all.length];
+  nextIndex++;
   return toRound(next);
 }
 scenarioPromise = loadScenario();
