@@ -84,6 +84,10 @@ html, body { width: 100%; height: 100%; overflow: hidden; }
   .scene-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
   .scene-tile .tile-label { font-size: 13px; padding: 8px 10px 10px; }
 }
+.picker-foot { display: flex; justify-content: flex-end; margin-top: 18px; }
+.picker-reset { padding: 9px 18px; font-size: 14px; }
+.picker-reset.confirm { background: rgba(255,155,115,0.22); border-color: var(--peach); color: var(--peach); }
+.picker-reset:disabled { opacity: 0.4; cursor: default; transform: none; background: rgba(255,255,255,0.12); }
 /* Darker glass so it reads on the busy cover photo */
 #scenes-btn { background: rgba(20,12,4,0.55); border-color: rgba(250,219,20,0.45); }
 
@@ -488,11 +492,14 @@ html, body { width: 100%; height: 100%; overflow: hidden; }
     <div class="picker-head">
       <div>
         <div class="picker-title" id="picker-title">Choose a scene</div>
-        <div class="picker-sub" id="picker-sub"></div>
+        <div class="picker-sub" id="picker-sub" aria-live="polite"></div>
       </div>
       <button class="ghost-btn picker-close" id="picker-close" aria-label="Close">✕</button>
     </div>
     <div class="scene-grid" id="scene-grid"></div>
+    <div class="picker-foot">
+      <button class="ghost-btn picker-reset" id="picker-reset">↺ Reset progress</button>
+    </div>
   </div>
 </div>
 
@@ -756,6 +763,7 @@ async function openPicker() {
   });
   const done = all.filter(s => completed.has(s.id)).length;
   document.getElementById('picker-sub').textContent = `${done} of ${all.length} badges earned`;
+  resetResetBtn(done === 0);
   document.getElementById('scene-picker').classList.add('show');
   document.getElementById('scene-picker').scrollTop = 0;
   grid.querySelector('button')?.focus();
@@ -774,6 +782,29 @@ async function playScene(i) {
   await startRound();
   document.getElementById('intro-screen').classList.add('hidden');
 }
+
+// Reset progress: clears the ticks and the score. Two taps, since it can't be undone.
+const resetBtn = document.getElementById('picker-reset');
+let resetTimer = null;
+function resetResetBtn(disabled) {
+  clearTimeout(resetTimer);
+  resetBtn.classList.remove('confirm');
+  resetBtn.textContent = '↺ Reset progress';
+  resetBtn.disabled = disabled;
+}
+resetBtn.addEventListener('click', () => {
+  if (!resetBtn.classList.contains('confirm')) {
+    resetBtn.classList.add('confirm');
+    resetBtn.textContent = 'Tap again to reset';
+    resetTimer = setTimeout(() => resetResetBtn(false), 3000);
+    return;
+  }
+  completed.clear();
+  try { localStorage.removeItem(COMPLETED_KEY); } catch {}
+  points = 0;
+  document.getElementById('pts').textContent = '0';
+  openPicker(); // re-render: ticks cleared, count back to 0, focus on the first scene
+});
 
 document.getElementById('scenes-btn').addEventListener('click', openPicker);
 document.getElementById('picker-close').addEventListener('click', closePicker);
