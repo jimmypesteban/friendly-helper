@@ -22,10 +22,11 @@ html, body { width: 100%; height: 100%; overflow: hidden; }
   width: 100%; height: 100%;
   object-fit: cover; pointer-events: none;
 }
+#intro-actions {
+  position: absolute; left: 50%; bottom: 10vh; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 14px; z-index: 1;
+}
 #play-now-btn {
-  position: absolute;
-  bottom: 14vh; left: 50%;
-  transform: translateX(-50%);
   background: #FADB14;
   border: 4px solid #795a3b;
   border-radius: 80px;
@@ -34,12 +35,57 @@ html, body { width: 100%; height: 100%; overflow: hidden; }
   font-weight: 900; font-style: normal;
   font-size: clamp(18px,2.8vw,40px);
   color: #4a2e19;
-  cursor: pointer; white-space: nowrap; z-index: 1;
+  cursor: pointer; white-space: nowrap;
   transition: transform 0.15s, filter 0.15s;
   box-shadow: 0 6px 24px rgba(0,0,0,0.25);
 }
-#play-now-btn:hover  { transform: translateX(-50%) scale(1.06); filter: brightness(1.08); }
-#play-now-btn:active { transform: translateX(-50%) scale(0.97); }
+#play-now-btn:hover  { transform: scale(1.06); filter: brightness(1.08); }
+#play-now-btn:active { transform: scale(0.97); }
+
+/* ── Scene picker ── */
+#scene-picker {
+  position: fixed; inset: 0; z-index: 650; padding: 16px; overflow-y: auto;
+  background: radial-gradient(ellipse at center, rgba(20,12,4,0.55), rgba(10,6,2,0.85));
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  display: none; align-items: center; justify-content: center;
+}
+#scene-picker.show { display: flex; }
+.picker-card { width: 100%; max-width: 1040px; padding: 28px clamp(16px,3vw,32px) 32px; animation: popIn 0.35s cubic-bezier(0.175,0.885,0.32,1.275); }
+.picker-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; text-align: left; }
+.picker-title {
+  font-family: 'Avenir','Montserrat',sans-serif; font-weight: 900; font-size: clamp(24px,2.6vw,34px); color: var(--gold);
+  text-shadow: 0 3px 0 var(--cocoa-line), 0 -1px 0 var(--cocoa-line), 2px 0 0 var(--cocoa-line), -2px 0 0 var(--cocoa-line);
+}
+.picker-sub { font-size: 14px; color: rgba(255,248,225,0.7); margin-top: 4px; }
+.picker-close { padding: 10px 18px; font-size: 16px; flex-shrink: 0; }
+.scene-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 14px; }
+.scene-tile {
+  position: relative; display: flex; flex-direction: column; text-align: left; padding: 0; overflow: hidden;
+  background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.18); border-radius: 18px;
+  color: var(--cream); cursor: pointer; font: inherit;
+  transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+.scene-tile:hover, .scene-tile:focus-visible { transform: translateY(-3px); border-color: var(--gold); box-shadow: 0 0 22px rgba(250,219,20,0.35); outline: none; }
+.scene-tile img { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; }
+.scene-tile .tile-label { padding: 10px 12px 12px; font-family: 'Avenir','Montserrat',sans-serif; font-weight: 900; font-size: 15px; line-height: 1.2; }
+.scene-tile .tile-num {
+  position: absolute; top: 8px; left: 8px; min-width: 28px; height: 28px; padding: 0 8px; border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(20,12,4,0.7); border: 1px solid rgba(255,255,255,0.35);
+  font-family: 'Avenir','Montserrat',sans-serif; font-weight: 900; font-size: 13px; color: #fff;
+}
+.scene-tile .tile-done {
+  position: absolute; top: 8px; right: 8px; width: 30px; height: 30px; border-radius: 50%; display: none;
+  align-items: center; justify-content: center; background: var(--gold); border: 2px solid var(--cocoa-line);
+  color: var(--cocoa); font-weight: 900; font-size: 15px;
+}
+.scene-tile.done .tile-done { display: flex; }
+@media (max-width: 600px) {
+  .scene-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .scene-tile .tile-label { font-size: 13px; padding: 8px 10px 10px; }
+}
+/* Darker glass so it reads on the busy cover photo */
+#scenes-btn { background: rgba(20,12,4,0.55); border-color: rgba(250,219,20,0.45); }
 
 /* ── Full-screen wrapper ── */
 #game {
@@ -430,7 +476,24 @@ html, body { width: 100%; height: 100%; overflow: hidden; }
 <!-- ── Intro screen ── -->
 <div id="intro-screen">
   <img id="intro-cover" src="cover.jpg" alt=""/>
-  <button id="play-now-btn">Play Now</button>
+  <div id="intro-actions">
+    <button id="play-now-btn">Play Now</button>
+    <button class="ghost-btn" id="scenes-btn">☰ Choose a scene</button>
+  </div>
+</div>
+
+<!-- Scene picker (from the home screen) -->
+<div id="scene-picker" role="dialog" aria-modal="true" aria-labelledby="picker-title">
+  <div class="glass-card picker-card">
+    <div class="picker-head">
+      <div>
+        <div class="picker-title" id="picker-title">Choose a scene</div>
+        <div class="picker-sub" id="picker-sub"></div>
+      </div>
+      <button class="ghost-btn picker-close" id="picker-close" aria-label="Close">✕</button>
+    </div>
+    <div class="scene-grid" id="scene-grid"></div>
+  </div>
 </div>
 
 <div id="game">
@@ -668,6 +731,57 @@ async function loadScenario() {
 }
 scenarioPromise = loadScenario();
 
+// ── Scene picker ──
+// Scenes won before, kept in this browser only (storage can be blocked, so guard it).
+const COMPLETED_KEY = 'friendly-helper-completed';
+const completed = new Set((() => { try { return JSON.parse(localStorage.getItem(COMPLETED_KEY)) || []; } catch { return []; } })());
+function markCompleted(id) {
+  completed.add(id);
+  try { localStorage.setItem(COMPLETED_KEY, JSON.stringify([...completed])); } catch {}
+}
+
+async function openPicker() {
+  const all = await scenariosPromise;
+  const grid = document.getElementById('scene-grid');
+  grid.innerHTML = '';
+  all.forEach((s, i) => {
+    const tile = document.createElement('button');
+    tile.className = 'scene-tile' + (completed.has(s.id) ? ' done' : '');
+    tile.innerHTML = `<img alt="" loading="lazy"><span class="tile-num">${i + 1}</span><span class="tile-done" aria-hidden="true">✓</span><span class="tile-label"></span>`;
+    tile.querySelector('img').src = s.thumb;
+    tile.querySelector('.tile-label').textContent = s.title;
+    tile.setAttribute('aria-label', `${i + 1}. ${s.title}${completed.has(s.id) ? ', badge earned' : ''}`);
+    tile.addEventListener('click', () => playScene(i));
+    grid.appendChild(tile);
+  });
+  const done = all.filter(s => completed.has(s.id)).length;
+  document.getElementById('picker-sub').textContent = `${done} of ${all.length} badges earned`;
+  document.getElementById('scene-picker').classList.add('show');
+  document.getElementById('scene-picker').scrollTop = 0;
+  grid.querySelector('button')?.focus();
+}
+
+function closePicker() {
+  document.getElementById('scene-picker').classList.remove('show');
+  document.getElementById('scenes-btn').focus();
+}
+
+// Start the chosen scene; the fixed order then continues from it.
+async function playScene(i) {
+  document.getElementById('scene-picker').classList.remove('show');
+  nextIndex = i;
+  scenarioPromise = loadScenario();
+  await startRound();
+  document.getElementById('intro-screen').classList.add('hidden');
+}
+
+document.getElementById('scenes-btn').addEventListener('click', openPicker);
+document.getElementById('picker-close').addEventListener('click', closePicker);
+document.getElementById('scene-picker').addEventListener('click', e => { if (e.target.id === 'scene-picker') closePicker(); });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && document.getElementById('scene-picker').classList.contains('show')) closePicker();
+});
+
 // Wait for the round's scenario, then play the clip of its setting
 // (watchVideo restarts via the 'play' event and reveals the choices).
 async function startRound() {
@@ -837,6 +951,7 @@ function showFeedback(idx) {
   const btn   = document.getElementById('m-btn');
 
   if (a.correct) {
+    markCompleted(current.id);
     points += 100;
     badgeEarned = true;
     document.getElementById('pts').textContent = points;
@@ -930,16 +1045,20 @@ function replayGame() {
 // Top-right "Replay": restart the scenario on screen from the beginning
 // (attempts reset, answers reshuffled).
 function restartScenario() {
-  const playing = current;
-  resetScene(false);
-  scenarioPromise = playing
-    ? Promise.resolve(playing.entry ? toRound(playing.entry) : playing)
-    : loadScenario();
+  restartCurrent();
   startRound();
 }
 
+// Reset the board but keep the scenario on screen queued for the next round.
+function restartCurrent() {
+  const playing = current;
+  resetScene(false);
+  if (playing) scenarioPromise = Promise.resolve(playing.entry ? toRound(playing.entry) : playing);
+}
+
+// Home: back to the start screen; Play Now resumes the same scenario from the top.
 function exitToHome() {
-  resetScene();
+  restartCurrent();
   video.pause();
   video.currentTime = 0;
   document.getElementById('intro-screen').classList.remove('hidden');

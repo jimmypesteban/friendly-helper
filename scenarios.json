@@ -1,102 +1,282 @@
 [
   {
     "id": "lobby",
+    "title": "Apartment lobby",
     "clip": "Scene.mp4",
+    "thumb": "clips/thumbs/lobby.jpg",
     "scenario": "Your neighbor Mr. Chen is walking to the glass doors with his hands full carrying a big box.",
-    "helpful": { "label": "Open the door", "reaction_title": "Amazing! Great job!", "feedback": "Opening the door for someone whose hands are full is a wonderful, friendly act. That's what real helpers do!" },
-    "ignore": { "label": "Keep using phone", "reaction_title": "That's not very helpful!", "feedback": "Your phone can wait. Mr. Chen needs a hand right now. Look up, someone may need you!" },
-    "careless": { "label": "Bump into the box", "reaction_title": "Oops! Slow down!", "feedback": "Rushing past without looking bumped the box and nearly made Mr. Chen drop everything. Slow down and look around!" },
-    "in_the_way": { "label": "Block the door", "reaction_title": "That makes it worse!", "feedback": "Standing in the doorway makes it even harder for Mr. Chen to get through. A good helper clears the way!" },
+    "helpful": {
+      "label": "Open the door",
+      "reaction_title": "Amazing! Great job!",
+      "feedback": "Opening the door for someone whose hands are full is a wonderful, friendly act. That's what real helpers do!"
+    },
+    "ignore": {
+      "label": "Keep using phone",
+      "reaction_title": "That's not very helpful!",
+      "feedback": "Your phone can wait. Mr. Chen needs a hand right now. Look up, someone may need you!"
+    },
+    "careless": {
+      "label": "Bump into the box",
+      "reaction_title": "Oops! Slow down!",
+      "feedback": "Rushing past without looking bumped the box and nearly made Mr. Chen drop everything. Slow down and look around!"
+    },
+    "in_the_way": {
+      "label": "Block the door",
+      "reaction_title": "That makes it worse!",
+      "feedback": "Standing in the doorway makes it even harder for Mr. Chen to get through. A good helper clears the way!"
+    },
     "badge_line": "You opened the door for Mr. Chen when his hands were full."
   },
   {
     "id": "school-corridor",
+    "title": "School corridor",
     "clip": "clips/school-corridor.mp4",
+    "thumb": "clips/thumbs/school-corridor.jpg",
     "scenario": "Your classmate Tsz Yan, the girl with the ponytail, left her red locker open. Her books are about to slide out.",
-    "helpful": { "label": "Close her locker", "reaction_title": "Wonderful helping!", "feedback": "You tucked the books back and closed the locker for Tsz Yan. Now her things are safe. That's a real helper!" },
-    "ignore": { "label": "Keep walking to class", "reaction_title": "Oh no, the books!", "feedback": "Tsz Yan's books could fall and get stepped on. A helper notices when a friend forgets something." },
-    "careless": { "label": "Run into the locker", "reaction_title": "Oops! Slow down!", "feedback": "Running without looking banged the locker door, and the books tumbled onto the floor. Walk slowly in the corridor!" },
-    "in_the_way": { "label": "Borrow without asking", "reaction_title": "That's not yours!", "feedback": "Taking Tsz Yan's book without asking isn't fair, even for a minute. Help keep a friend's things safe instead." },
+    "helpful": {
+      "label": "Close her locker",
+      "reaction_title": "Wonderful helping!",
+      "feedback": "You tucked the books back and closed the locker for Tsz Yan. Now her things are safe. That's a real helper!"
+    },
+    "ignore": {
+      "label": "Keep walking to class",
+      "reaction_title": "Oh no, the books!",
+      "feedback": "Tsz Yan's books could fall and get stepped on. A helper notices when a friend forgets something."
+    },
+    "careless": {
+      "label": "Run into the locker",
+      "reaction_title": "Oops! Slow down!",
+      "feedback": "Running without looking banged the locker door, and the books tumbled onto the floor. Walk slowly in the corridor!"
+    },
+    "in_the_way": {
+      "label": "Borrow without asking",
+      "reaction_title": "That's not yours!",
+      "feedback": "Taking Tsz Yan's book without asking isn't fair, even for a minute. Help keep a friend's things safe instead."
+    },
     "badge_line": "You closed Tsz Yan's locker so her books stayed safe."
   },
   {
     "id": "classroom",
+    "title": "Classroom",
     "clip": "clips/classroom.mp4",
+    "thumb": "clips/thumbs/classroom.jpg",
     "scenario": "Your classmate Priya, at the desk on the right, opens her pink pencil case and finds no pencil to write with.",
-    "helpful": { "label": "Share your pencil", "reaction_title": "Amazing! Great job!", "feedback": "Sharing your pencil means Priya can join in the lesson too. Small kind acts make the whole class happier!" },
-    "ignore": { "label": "Keep drawing doodles", "reaction_title": "Priya still needs help!", "feedback": "Doodling is fun, but Priya can't start her work. A helper notices when a classmate is stuck." },
-    "careless": { "label": "Knock over her case", "reaction_title": "Oops! Slow down!", "feedback": "Rushing to your seat knocked Priya's pencil case off the desk, and everything spilled. Walk slowly between desks!" },
-    "in_the_way": { "label": "Take the spare pencils", "reaction_title": "That's not fair!", "feedback": "Taking all the spare pencils leaves none for Priya. Sharing means everyone gets a turn to learn." },
+    "helpful": {
+      "label": "Share your pencil",
+      "reaction_title": "Amazing! Great job!",
+      "feedback": "Sharing your pencil means Priya can join in the lesson too. Small kind acts make the whole class happier!"
+    },
+    "ignore": {
+      "label": "Keep drawing doodles",
+      "reaction_title": "Priya still needs help!",
+      "feedback": "Doodling is fun, but Priya can't start her work. A helper notices when a classmate is stuck."
+    },
+    "careless": {
+      "label": "Knock over her case",
+      "reaction_title": "Oops! Slow down!",
+      "feedback": "Rushing to your seat knocked Priya's pencil case off the desk, and everything spilled. Walk slowly between desks!"
+    },
+    "in_the_way": {
+      "label": "Take the spare pencils",
+      "reaction_title": "That's not fair!",
+      "feedback": "Taking all the spare pencils leaves none for Priya. Sharing means everyone gets a turn to learn."
+    },
     "badge_line": "You shared your pencil so Priya could write."
   },
   {
     "id": "playground",
+    "title": "Estate playground",
     "clip": "clips/playground.mp4",
+    "thumb": "clips/thumbs/playground.jpg",
     "scenario": "Grandma Wong, in the apron under the climbing frame, is sweeping up leaves, but her blue dustpan is by the slide.",
-    "helpful": { "label": "Bring the dustpan", "reaction_title": "What a helper!", "feedback": "Bringing the dustpan to Grandma Wong saves her a long walk. Helping grown-ups with their work is so kind!" },
-    "ignore": { "label": "Keep sliding down", "reaction_title": "Grandma needs a hand!", "feedback": "Sliding is fun, but Grandma Wong is bending and stretching for her dustpan. A helper notices and lends a hand." },
-    "careless": { "label": "Run through the leaves", "reaction_title": "Oops! Slow down!", "feedback": "Running through the pile scattered the leaves all over again. Now Grandma Wong has to start over. Look before you run!" },
-    "in_the_way": { "label": "Stand on the dustpan", "reaction_title": "That makes it harder!", "feedback": "Standing on the dustpan means Grandma Wong can't use it. A good helper clears the way so the work gets done." },
+    "helpful": {
+      "label": "Bring the dustpan",
+      "reaction_title": "What a helper!",
+      "feedback": "Bringing the dustpan to Grandma Wong saves her a long walk. Helping grown-ups with their work is so kind!"
+    },
+    "ignore": {
+      "label": "Keep sliding down",
+      "reaction_title": "Grandma needs a hand!",
+      "feedback": "Sliding is fun, but Grandma Wong is bending and stretching for her dustpan. A helper notices and lends a hand."
+    },
+    "careless": {
+      "label": "Run through the leaves",
+      "reaction_title": "Oops! Slow down!",
+      "feedback": "Running through the pile scattered the leaves all over again. Now Grandma Wong has to start over. Look before you run!"
+    },
+    "in_the_way": {
+      "label": "Stand on the dustpan",
+      "reaction_title": "That makes it harder!",
+      "feedback": "Standing on the dustpan means Grandma Wong can't use it. A good helper clears the way so the work gets done."
+    },
     "badge_line": "You brought Grandma Wong her dustpan so she could finish sweeping."
   },
   {
     "id": "library",
+    "title": "Library",
     "clip": "clips/library.mp4",
+    "thumb": "clips/thumbs/library.jpg",
     "scenario": "Your little cousin Lucas, at the blue table, wants more picture books from the box but cannot carry them all.",
-    "helpful": { "label": "Carry some books", "reaction_title": "Wonderful helping!", "feedback": "Carrying some books to the table means Lucas can keep reading. Helping little ones makes them feel cared for!" },
-    "ignore": { "label": "Run off to play", "reaction_title": "Lucas still needs help!", "feedback": "Playing is fun, but Lucas can't carry all his books. A helper notices when little ones are stuck." },
-    "careless": { "label": "Trip over the box", "reaction_title": "Oops! Slow down!", "feedback": "Hurrying without looking tipped the book box over, and books spilled everywhere. Walk slowly in the library!" },
-    "in_the_way": { "label": "Take the books first", "reaction_title": "That's not fair!", "feedback": "Grabbing the books Lucas wanted leaves him with none. Let little ones have a turn and help them instead." },
+    "helpful": {
+      "label": "Carry some books",
+      "reaction_title": "Wonderful helping!",
+      "feedback": "Carrying some books to the table means Lucas can keep reading. Helping little ones makes them feel cared for!"
+    },
+    "ignore": {
+      "label": "Run off to play",
+      "reaction_title": "Lucas still needs help!",
+      "feedback": "Playing is fun, but Lucas can't carry all his books. A helper notices when little ones are stuck."
+    },
+    "careless": {
+      "label": "Trip over the box",
+      "reaction_title": "Oops! Slow down!",
+      "feedback": "Hurrying without looking tipped the book box over, and books spilled everywhere. Walk slowly in the library!"
+    },
+    "in_the_way": {
+      "label": "Take the books first",
+      "reaction_title": "That's not fair!",
+      "feedback": "Grabbing the books Lucas wanted leaves him with none. Let little ones have a turn and help them instead."
+    },
     "badge_line": "You carried picture books to the table for your cousin Lucas."
   },
   {
     "id": "cha-chaan-teng",
+    "title": "Cha chaan teng",
     "clip": "clips/cha-chaan-teng.mp4",
+    "thumb": "clips/thumbs/cha-chaan-teng.jpg",
     "scenario": "Auntie May, laughing in the red booth on the right, dropped her chopsticks on the floor and cannot reach them.",
-    "helpful": { "label": "Get a clean pair", "reaction_title": "Amazing! Great job!", "feedback": "Picking up the dropped chopsticks and bringing Auntie May a clean pair means she can keep eating. So thoughtful!" },
-    "ignore": { "label": "Play with your straw", "reaction_title": "Auntie May needs help!", "feedback": "Playing is fun, but Auntie May is stuck without chopsticks. A helper notices when someone at the table needs a hand." },
-    "careless": { "label": "Knock over the tea", "reaction_title": "Oops! Slow down!", "feedback": "Hopping off your seat without looking knocked over the milk tea, and now the table is wet too. Move carefully at the table!" },
-    "in_the_way": { "label": "Crowd her booth seat", "reaction_title": "That makes it harder!", "feedback": "Squeezing into Auntie May's seat means she can't move to reach anything. Give people space and help them instead." },
+    "helpful": {
+      "label": "Get a clean pair",
+      "reaction_title": "Amazing! Great job!",
+      "feedback": "Picking up the dropped chopsticks and bringing Auntie May a clean pair means she can keep eating. So thoughtful!"
+    },
+    "ignore": {
+      "label": "Play with your straw",
+      "reaction_title": "Auntie May needs help!",
+      "feedback": "Playing is fun, but Auntie May is stuck without chopsticks. A helper notices when someone at the table needs a hand."
+    },
+    "careless": {
+      "label": "Knock over the tea",
+      "reaction_title": "Oops! Slow down!",
+      "feedback": "Hopping off your seat without looking knocked over the milk tea, and now the table is wet too. Move carefully at the table!"
+    },
+    "in_the_way": {
+      "label": "Crowd her booth seat",
+      "reaction_title": "That makes it harder!",
+      "feedback": "Squeezing into Auntie May's seat means she can't move to reach anything. Give people space and help them instead."
+    },
     "badge_line": "You got Auntie May a clean pair of chopsticks."
   },
   {
     "id": "mtr",
+    "title": "MTR",
     "clip": "clips/mtr.mp4",
+    "thumb": "clips/thumbs/mtr.jpg",
     "scenario": "Your cousin Chloe, in the white school blouse on the left, is busy on her phone. Her big black bag is slipping off her lap.",
-    "helpful": { "label": "Catch her bag", "reaction_title": "Great catch!", "feedback": "Catching Chloe's bag before it fell kept her things safe. Telling her kindly helps too. Nice helping!" },
-    "ignore": { "label": "Keep playing your game", "reaction_title": "Chloe's bag is falling!", "feedback": "Your game can wait. Chloe's bag is about to fall. A helper keeps an eye out for family." },
-    "careless": { "label": "Bump into her bag", "reaction_title": "Oops! Slow down!", "feedback": "Wobbling down the train without holding on bumped Chloe's bag right onto the floor. Hold the pole and move carefully!" },
-    "in_the_way": { "label": "Crowd Chloe's seat", "reaction_title": "That makes it harder!", "feedback": "Squeezing onto Chloe's seat pushes her bag even closer to the edge. Give people room on the train." },
+    "helpful": {
+      "label": "Catch her bag",
+      "reaction_title": "Great catch!",
+      "feedback": "Catching Chloe's bag before it fell kept her things safe. Telling her kindly helps too. Nice helping!"
+    },
+    "ignore": {
+      "label": "Keep playing your game",
+      "reaction_title": "Chloe's bag is falling!",
+      "feedback": "Your game can wait. Chloe's bag is about to fall. A helper keeps an eye out for family."
+    },
+    "careless": {
+      "label": "Bump into her bag",
+      "reaction_title": "Oops! Slow down!",
+      "feedback": "Wobbling down the train without holding on bumped Chloe's bag right onto the floor. Hold the pole and move carefully!"
+    },
+    "in_the_way": {
+      "label": "Crowd Chloe's seat",
+      "reaction_title": "That makes it harder!",
+      "feedback": "Squeezing onto Chloe's seat pushes her bag even closer to the edge. Give people room on the train."
+    },
     "badge_line": "You caught Chloe's bag before it fell on the train."
   },
   {
     "id": "supermarket",
+    "title": "Supermarket",
     "clip": "clips/supermarket.mp4",
+    "thumb": "clips/thumbs/supermarket.jpg",
     "scenario": "Grandpa Lee, in the white vest, is pushing a trolley so full that snack bags keep falling off the top.",
-    "helpful": { "label": "Pick up the snacks", "reaction_title": "Amazing! Great job!", "feedback": "Picking up the fallen snacks and putting them back helps Grandpa Lee keep going. Helping family shop is so kind!" },
-    "ignore": { "label": "Go look at drinks", "reaction_title": "Grandpa needs a hand!", "feedback": "The drinks can wait. Grandpa Lee's snacks keep falling. A helper notices when family needs help." },
-    "careless": { "label": "Stomp on the snacks", "reaction_title": "Oops! Slow down!", "feedback": "Running without looking stomped on the fallen snacks, and now they're squashed. Watch where you walk!" },
-    "in_the_way": { "label": "Block the trolley", "reaction_title": "That makes it harder!", "feedback": "Standing in front of the trolley means Grandpa Lee can't move, and more snacks fall. A good helper clears the way." },
+    "helpful": {
+      "label": "Pick up the snacks",
+      "reaction_title": "Amazing! Great job!",
+      "feedback": "Picking up the fallen snacks and putting them back helps Grandpa Lee keep going. Helping family shop is so kind!"
+    },
+    "ignore": {
+      "label": "Go look at drinks",
+      "reaction_title": "Grandpa needs a hand!",
+      "feedback": "The drinks can wait. Grandpa Lee's snacks keep falling. A helper notices when family needs help."
+    },
+    "careless": {
+      "label": "Stomp on the snacks",
+      "reaction_title": "Oops! Slow down!",
+      "feedback": "Running without looking stomped on the fallen snacks, and now they're squashed. Watch where you walk!"
+    },
+    "in_the_way": {
+      "label": "Block the trolley",
+      "reaction_title": "That makes it harder!",
+      "feedback": "Standing in front of the trolley means Grandpa Lee can't move, and more snacks fall. A good helper clears the way."
+    },
     "badge_line": "You helped Grandpa Lee pick up his fallen snacks."
   },
   {
     "id": "park",
+    "title": "Park",
     "clip": "clips/park.mp4",
+    "thumb": "clips/thumbs/park.jpg",
     "scenario": "Grandpa Lee, on the green bench, is enjoying the sun, but the wind is blowing his spare newspaper off the bench.",
-    "helpful": { "label": "Catch the newspaper", "reaction_title": "Wonderful helping!", "feedback": "Catching the pages and handing them back means Grandpa Lee can keep reading. Little helps make a big difference!" },
-    "ignore": { "label": "Run off to play", "reaction_title": "Grandpa needs a hand!", "feedback": "Playing is fun, but Grandpa Lee's newspaper is blowing away. A helper stops for a moment to lend a hand." },
-    "careless": { "label": "Run through the pages", "reaction_title": "Oops! Slow down!", "feedback": "Running through the pages tore them and blew them even farther. Slow down and look before you run!" },
-    "in_the_way": { "label": "Sit on the newspaper", "reaction_title": "That makes it worse!", "feedback": "Sitting on the newspaper crumples it so Grandpa Lee can't read it. A good helper hands things back neatly." },
+    "helpful": {
+      "label": "Catch the newspaper",
+      "reaction_title": "Wonderful helping!",
+      "feedback": "Catching the pages and handing them back means Grandpa Lee can keep reading. Little helps make a big difference!"
+    },
+    "ignore": {
+      "label": "Run off to play",
+      "reaction_title": "Grandpa needs a hand!",
+      "feedback": "Playing is fun, but Grandpa Lee's newspaper is blowing away. A helper stops for a moment to lend a hand."
+    },
+    "careless": {
+      "label": "Run through the pages",
+      "reaction_title": "Oops! Slow down!",
+      "feedback": "Running through the pages tore them and blew them even farther. Slow down and look before you run!"
+    },
+    "in_the_way": {
+      "label": "Sit on the newspaper",
+      "reaction_title": "That makes it worse!",
+      "feedback": "Sitting on the newspaper crumples it so Grandpa Lee can't read it. A good helper hands things back neatly."
+    },
     "badge_line": "You caught Grandpa Lee's newspaper before it blew away."
   },
   {
     "id": "basketball-court",
+    "title": "Basketball court",
     "clip": "clips/basketball-court.mp4",
+    "thumb": "clips/thumbs/basketball-court.jpg",
     "scenario": "Your teammate Omar, in his blue PE kit at the back, dropped his ball and it rolled under the ball rack. He looks embarrassed.",
-    "helpful": { "label": "Help get the ball", "reaction_title": "Great teamwork!", "feedback": "Helping Omar get his ball back lets him join in again. Good teammates help each other, especially after a mistake!" },
-    "ignore": { "label": "Keep bouncing", "reaction_title": "Omar needs a teammate!", "feedback": "Bouncing is fun, but Omar is stuck and feels embarrassed. A good teammate notices and helps." },
-    "careless": { "label": "Knock over the rack", "reaction_title": "Oops! Slow down!", "feedback": "Racing over without looking knocked the ball rack, and balls rolled everywhere. Slow down on the court!" },
-    "in_the_way": { "label": "Take his ball first", "reaction_title": "That's not fair!", "feedback": "Grabbing Omar's ball first leaves him with nothing to play with. Good teammates give the ball back." },
+    "helpful": {
+      "label": "Help get the ball",
+      "reaction_title": "Great teamwork!",
+      "feedback": "Helping Omar get his ball back lets him join in again. Good teammates help each other, especially after a mistake!"
+    },
+    "ignore": {
+      "label": "Keep bouncing",
+      "reaction_title": "Omar needs a teammate!",
+      "feedback": "Bouncing is fun, but Omar is stuck and feels embarrassed. A good teammate notices and helps."
+    },
+    "careless": {
+      "label": "Knock over the rack",
+      "reaction_title": "Oops! Slow down!",
+      "feedback": "Racing over without looking knocked the ball rack, and balls rolled everywhere. Slow down on the court!"
+    },
+    "in_the_way": {
+      "label": "Take his ball first",
+      "reaction_title": "That's not fair!",
+      "feedback": "Grabbing Omar's ball first leaves him with nothing to play with. Good teammates give the ball back."
+    },
     "badge_line": "You helped your teammate Omar get his ball back."
   }
 ]

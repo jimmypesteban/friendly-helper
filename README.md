@@ -4,7 +4,7 @@ A small social-emotional learning game for kids aged 5–8, set in Hong Kong. A 
 
 **Live:** https://friendly-helper.vercel.app
 
-There are 10 scenarios, one per background clip (photorealistic Hong Kong settings: classroom, MTR, cha chaan teng, park and more). Each is built around a person who is visible when the clip freezes. Scenarios play in a fixed order, 1 to 10 as listed in `scenarios.json`, then loop back to the first. The four answers are shuffled every round. The game is static: no server, no API calls while playing.
+There are 10 scenarios, one per background clip (photorealistic Hong Kong settings: classroom, MTR, cha chaan teng, park and more). Each is built around a person who is visible when the clip freezes. Scenarios play in a fixed order, 1 to 10 as listed in `scenarios.json`, then loop back to the first. The four answers are shuffled every round. A **Choose a scene** button on the start screen jumps to any of the 10; scenes you've won get a tick (saved in your browser). **Replay** and **Home** restart the scenario you're on; **Play again** after a win moves to the next one. The game is static: no server, no API calls while playing.
 
 ## How it works
 
