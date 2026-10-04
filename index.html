@@ -493,7 +493,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; }
 
   <!-- Top-right buttons -->
   <div id="top-btns">
-    <button class="top-btn" id="replay-btn" onclick="replayGame()">
+    <button class="top-btn" id="replay-btn" onclick="restartScenario()">
       <span class="replay-icon">↺</span> Replay
     </button>
     <button class="top-btn" id="exit-btn" onclick="exitToHome()">⌂ Home</button>
@@ -584,6 +584,11 @@ function watchVideo() {
 video.addEventListener('play', () => {
   rafId = requestAnimationFrame(watchVideo);
 });
+// Backup for the rAF loop, which browsers throttle in unfocused tabs: without
+// it the clip can run past the 6s frame each scenario is written around.
+video.addEventListener('timeupdate', () => {
+  if (!uiRevealed && video.currentTime >= STOP_TIME) watchVideo();
+});
 video.addEventListener('ended', () => {
   if (!uiRevealed) { uiRevealed = true; revealUI(); }
 });
@@ -629,6 +634,7 @@ function shuffle(arr) {
 // the right answer isn't always in the same blob.
 function toRound(s) {
   return {
+    entry: s,           // kept so Replay can rebuild the same scenario
     id: s.id,
     video: s.clip,
     scenario: s.scenario,
@@ -883,7 +889,8 @@ function resetPhoneArm() {
   pi.setAttribute('x2',53); pi.setAttribute('y2',80);
 }
 
-function resetScene() {
+// next = true queues the following scenario; false leaves scenarioPromise for the caller.
+function resetScene(next = true) {
   answered = false;
   lastPickedIdx = -1;
   uiRevealed = false;
@@ -909,13 +916,25 @@ function resetScene() {
     b.className = 'choice-btn';
     b.disabled = false;
   });
-  // Ask for the next scenario now so it is ready by the time the video pauses.
   current = null;
-  scenarioPromise = loadScenario();
+  // Ask for the next scenario now so it is ready by the time the video pauses.
+  if (next) scenarioPromise = loadScenario();
 }
 
+// Badge screen "Play again": move on to the next scenario.
 function replayGame() {
   resetScene();
+  startRound();
+}
+
+// Top-right "Replay": restart the scenario on screen from the beginning
+// (attempts reset, answers reshuffled).
+function restartScenario() {
+  const playing = current;
+  resetScene(false);
+  scenarioPromise = playing
+    ? Promise.resolve(playing.entry ? toRound(playing.entry) : playing)
+    : loadScenario();
   startRound();
 }
 
